@@ -1,14 +1,7 @@
 grammar grammar_v1;
 
-/*
-At the simplest form, all global variables have to be defined
-before all the classes
-@TODO allow variables to be assigned after classes, if not used by them
-*/
-
 prog
-    :classes
-    |statements 
+    :classes 
 ;
  
 classes
@@ -16,21 +9,20 @@ classes
 ;
     
 class
-    : 'class' ID ':''\n''\t' initFunction '\n''\t'functions
+    : 'class' ID ':'block initFunction block functions
 ;
 
 initFunction
-    :'def''__init__''('formalparlist')'':' '\n''\t'(statements | 'pass')
+    :'def''__init__''('formalparlist')'':' block (statements | 'pass')
 ;
 
-// @TODO def in def
 functions
-    : function ('\n''\t'function)*
+    : function (block function)*
 	|
 ;
 
 function
-    :'def' ID '(' formalparlist')' ':' '\n''\t' (statements | 'pass')
+    :'def' ID '(' formalparlist')' ':'block (statements | 'pass')
 ;
 
 statements
@@ -82,7 +74,6 @@ actualparitem
 
 assignmentStat
     : ID '=' expression
-    // @TODO allow multiple assignment, eg. x,y = 1,2. Number of vars = numb of values
 ;
 
 // Two option, one with parentheses and one without
@@ -132,7 +123,6 @@ boolterm
     ('and' boolfactor)*
 ;
 
-// @TODO allow condition without parentheses
 // Parentheses are mandatory here because of left-recursiveness error
 boolfactor
     : 'not' '(' condition ')'
@@ -168,15 +158,22 @@ optionalSign
     |
 ;
 
+block
+    :'\n''\t'
+    //|NEWLINE('\t')+
+    |NEWLINE'\t'
+    |(NEWLINE)*
+;
+
+NEWLINE: ('\n')+;
 ID: [a-zA-Z_]+ [a-zA-Z0-9_]*;
 INT: [0-9]+ ('.' [0-9]+)?; 
 REL_OP: '=='|'<='|'>='|'!='|'<'|'>';
 ADD_OP: '+'|'-';
 MUL_OP: '*'|'/';
 COMMENT: '"""' .*? '"""' ->channel(HIDDEN);
-NEWLINE: ('\n')+;
 WS:    
-    // @TODO fix \n and \t
+    // @TODO fix \n and \t using a rule
     //[ \r\t\n]+ -> skip
     [ \r]+ -> skip
 ;  
