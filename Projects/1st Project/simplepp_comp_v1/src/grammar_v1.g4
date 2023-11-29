@@ -158,11 +158,12 @@ optionalSign
     |
 ;
 
+// @TODO fix \n and \t using a rule
 block
     :'\n''\t'
     //|NEWLINE('\t')+
-    |NEWLINE'\t'
-    |(NEWLINE)*
+    //|NEWLINE'\t'
+    //|(NEWLINE ('\t')*)*
 ;
 
 NEWLINE: ('\n')+;
@@ -173,7 +174,6 @@ ADD_OP: '+'|'-';
 MUL_OP: '*'|'/';
 COMMENT: '"""' .*? '"""' ->channel(HIDDEN);
 WS:    
-    // @TODO fix \n and \t using a rule
     //[ \r\t\n]+ -> skip
     [ \r]+ -> skip
 ;  
