@@ -9,11 +9,11 @@ classes
 ;
     
 class
-    : 'class' ID ':'block initFunction block functions
+    : 'class' ID ':' initFunction functions
 ;
 
 initFunction
-    :'def''__init__''('formalparlist')'':' block (statements | 'pass')
+    :'def''__init__''('formalparlist')'':' (statements | 'pass')
 ;
 
 functions
@@ -26,7 +26,7 @@ function
 ;
 
 statements
-    :(statement'\n''\t')*
+    :(statement)*
 	|
 ;
 
@@ -161,10 +161,11 @@ optionalSign
 // @TODO fix \n and \t using a rule
 block
     :'\n''\t'
-    //|NEWLINE('\t')+
-    //|NEWLINE'\t'
-    //|(NEWLINE ('\t')*)*
+    |NEWLINE('\t')+
+    |NEWLINE'\t'
+    |(NEWLINE ('\t')*)*
 ;
+
 
 NEWLINE: ('\n')+;
 ID: [a-zA-Z_]+ [a-zA-Z0-9_]*;
@@ -175,7 +176,7 @@ MUL_OP: '*'|'/';
 COMMENT: '"""' .*? '"""' ->channel(HIDDEN);
 WS:    
     //[ \r\t\n]+ -> skip
-    [ \r]+ -> skip
+    [ \r\t]+ -> skip
 ;  
    
    
