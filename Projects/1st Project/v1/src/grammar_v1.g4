@@ -1,8 +1,9 @@
 grammar grammar_v1;
 
-@members{
+@parser::members{
 	int tabCounter = 0;	
-	int getTabNumber(){
+    String tab = "";
+	int getTabCounter(){
 		return tabCounter;
 	}
 }
@@ -17,7 +18,10 @@ classes
 class
     : 'class' ID ':' initFunction  functions;
 initFunction
-    :{tabCounter++;}getTabCount'def''__init__''('formalparlist')'':'  (statements | 'pass'){tabCounter--;};
+    :{tabCounter++;}
+    {System.out.println("tabCounter = " + tabCounter);}
+    printTabs'def''__init__''('formalparlist')'':'  (statements | 'pass')
+    {tabCounter--;};
 functions
     : function ( function)*	
 	|
@@ -26,7 +30,7 @@ function
     :'\t'{tabCounter++;}'def' ID '(' formalparlist')' ':' (statements | 'pass')
 ;
 statements
-    :({tabCounter++;}getTabCount statement)*
+    :({tabCounter++;}printTabs statement)*
 	|
 ;
 statement
@@ -135,8 +139,14 @@ optionalSign
 block
     :'\n''\t'
 ;
-getTabCount returns [String tab]:{$tab = "\t".repeat(getTabNumber());};
- 
+
+printTabs returns [String tab]:
+    {$tab = "\t".repeat(getTabCounter());}
+    {System.out.println("tab = "+tab);}
+;
+tabs: TAB*;
+TAB: '\t';
+
 //NEWLINE: ('\n')+;
 ID: [a-zA-Z_]+ [a-zA-Z0-9_]*;
 INT: [0-9]+ ('.' [0-9]+)?; 
