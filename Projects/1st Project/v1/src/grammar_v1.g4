@@ -135,11 +135,11 @@ optionalSign
     :ADD_OP
     |
 ;
-// @TODO fix \n and \t using a rule
 block
     :'\n''\t'
 ;
 
+// @TODO fix tab not workin either in java nor in the compiler
 printTabs returns [String tab]:
     {$tab = "\t".repeat(getTabCounter());}
     {System.out.println("tab = "+tab);}
