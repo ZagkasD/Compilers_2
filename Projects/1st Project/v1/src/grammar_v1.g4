@@ -1,3 +1,5 @@
+// Tried to control tabs with rule printTabs
+// Doesn't work because it doesnt write \t but four spaces
 grammar grammar_v1;
 
 @parser::members{
