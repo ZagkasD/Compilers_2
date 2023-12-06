@@ -9,5 +9,5 @@ class Person:
 	def millenium(self):
 		if self.born < 2000:
 			return 1
-		else:
+		else:	
 			return 2

@@ -15,7 +15,7 @@ That won't be accepted by the compiler
 Also, adding a tab after e.g. else: , will also result in error
  */
 
-grammar grammar_v2;
+grammar grammar_v3;
 
 prog
     :classes;
@@ -27,16 +27,16 @@ classes
 class
     : 'class' ID ':' initFunction  functions;
 initFunction
-    :'\t' 'def''__init__''('formalparlist')'':'  (statements | 'pass');
+    :'\n''\t' 'def''__init__''('formalparlist')'':'(statements | 'pass');
 functions
     : function ( function)*	
 	|
 ;
 function
-    :'\t' 'def' ID '(' formalparlist')' ':' (statements | 'pass')
+    :'\n''\t' 'def' ID '(' formalparlist')' ':'(statements | 'pass')
 ;
 statements
-    :('\t' statement)*
+    :('\n'('\t'statement)*)*
 	|
 ;
 statement
@@ -47,6 +47,7 @@ statement
     |returnStat
     |callStat
 ;
+ 
 /*
 A list of formal parameters
 eg. def foo(x)
@@ -77,44 +78,50 @@ actualparitem
     |obj
     |ID
 ;
+ 
 assignmentStat
     : '\t'(ID | obj) '=' expression
 ;
 // Two option, one with parentheses and one without
 // because python accepts both
 ifStat
-    :'\t''if' condition':''\t'statements  '\t' elsepart
-    |'\t''if' '('condition')'':'statements '\t'elsepart
+    :'\t''if' condition':''\n' '\t' statements  elsepart
+    |'\t''if' '('condition')'':''\n' '\t' statements elsepart
 ;
 elsepart
-    :'\t''else'':' '\t'statements
+    :'else'':'  statements
     |
 ;
 whileStat
-    :'while' '(' condition ')' ':'
-    statements
-    |'while' condition ':'
-    statements
+    :'\t''while' '(' condition ')' ':''\n' '\t' statements
+	|'\t''while' condition ':'  '\n' '\t' statements
 ;
 printStat
-    :'print' '(' expression ')'
+    :'\t''print' '(' expression ')'
 ;
 returnStat
     :'\t''return' expression
     |'\t''return' '(' expression ')'
 ;
 callStat
-    :ID '('actualparlist')'
+    :'\t'ID '('actualparlist')'
 ;
 condition
     :boolterm
     ('or' boolterm)*
+ 
 ;
+ 
 boolterm
+ 
     :boolfactor
+ 
     ('and' boolfactor)*
+ 
 ;
+ 
 // Parentheses are mandatory here because of left-recursiveness error
+ 
 boolfactor
     : 'not' '(' condition ')'
     | '(' condition ')'
@@ -124,7 +131,7 @@ obj
     :ID'.'ID 
 ;
 expression
-    :optionalSign term 
+	:optionalSign term 
     (ADD_OP term)*
 ;
 term
@@ -132,7 +139,7 @@ term
 ;
 factor
     :INT
-    |ID
+	|ID
     // @TODO ID idtail
     |obj
     |'('expression')'
@@ -141,9 +148,13 @@ optionalSign
     :ADD_OP
     |
 ;
+// @TODO fix \n and \t using a rule
+ 
 block
-    :'\n''\t'
+    :NEWLINE'\t'
 ;
+NEWLINE: ('\n')+;
+ 
 ID: [a-zA-Z_]+ [a-zA-Z0-9_]*;
 INT: [0-9]+ ('.' [0-9]+)?; 
 REL_OP: '=='|'<='|'>='|'!='|'<'|'>';
@@ -151,5 +162,4 @@ ADD_OP: '+'|'-';
 MUL_OP: '*'|'/';
 COMMENT: '"""' .*? '"""' ->channel(HIDDEN);
 point: '.';
-WS:    
-    [ \r\n]+ -> skip;
+WS: [ \r]+ -> skip;
