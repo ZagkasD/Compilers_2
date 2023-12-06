@@ -1,31 +1,20 @@
-/* In this version the tabs are controlled with '\t' at proper places
+/* 
+In this version the tabs are controlled with '\t' at proper places
 If the input file is correct, the compiler accepts it.
-if an extra new line is inserted e.g.:
-else:
-        return 1
 
-to become
-
-    else:
-
-        return 1
-
-That won't be accepted by the compiler
- 
-Also, adding a tab after e.g. else: , will also result in error
+The new lines have been fixed in this version
  */
 
-grammar grammar_v3;
-
+grammar grammar_v2_1;
 prog
     :classes;
+classes
+    : class ('\n' class)* main;   
+class
+    : 'class' ID ':' initFunction  functions;
 main:
 	'if' '__name__' '==' '\'__main__\'' ':'statements
 	;
-classes
-    : class ( class)*;   
-class
-    : 'class' ID ':' initFunction  functions;
 initFunction
     :'\n''\t' 'def''__init__''('formalparlist')'':'(statements | 'pass');
 functions
@@ -47,7 +36,6 @@ statement
     |returnStat
     |callStat
 ;
- 
 /*
 A list of formal parameters
 eg. def foo(x)
@@ -78,7 +66,6 @@ actualparitem
     |obj
     |ID
 ;
- 
 assignmentStat
     : '\t'(ID | obj) '=' expression
 ;
@@ -109,19 +96,12 @@ callStat
 condition
     :boolterm
     ('or' boolterm)*
- 
 ;
- 
 boolterm
- 
     :boolfactor
- 
     ('and' boolfactor)*
- 
 ;
- 
 // Parentheses are mandatory here because of left-recursiveness error
- 
 boolfactor
     : 'not' '(' condition ')'
     | '(' condition ')'
@@ -149,12 +129,10 @@ optionalSign
     |
 ;
 // @TODO fix \n and \t using a rule
- 
 block
     :NEWLINE'\t'
 ;
 NEWLINE: ('\n')+;
- 
 ID: [a-zA-Z_]+ [a-zA-Z0-9_]*;
 INT: [0-9]+ ('.' [0-9]+)?; 
 REL_OP: '=='|'<='|'>='|'!='|'<'|'>';

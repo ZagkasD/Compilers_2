@@ -1,7 +1,0 @@
-{
-    "java.project.sourcePaths": ["src"],
-    "java.project.outputPath": "bin",
-    "java.project.referencedLibraries": [
-        "C:/Program Files/Java/jdk-17/lib/ANTLR/antlr-4.13.1-complete.jar"
-    ]
-}
