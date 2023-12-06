@@ -1,36 +1,25 @@
-grammar grammar_v1;
+grammar grammar_v2;
 
-@parser::members{
-	int tabCounter = 0;	
-    String tab = "";
-	int getTabCounter(){
-		return tabCounter;
-	}
-}
 prog
     :classes;
 main:
 	'if' '__name__' '==' '\'__main__\'' ':'statements
 	;
- 
 classes
     : class ( class)*;   
 class
     : 'class' ID ':' initFunction  functions;
 initFunction
-    :{tabCounter++;}
-    {System.out.println("tabCounter = " + tabCounter);}
-    printTabs'def''__init__''('formalparlist')'':'  (statements | 'pass')
-    {tabCounter--;};
+    :'\t''def''__init__''('formalparlist')'':'  (statements | 'pass');
 functions
     : function ( function)*	
 	|
 ;
 function
-    :'\t'{tabCounter++;}'def' ID '(' formalparlist')' ':' (statements | 'pass')
+    :'\t''def' ID '(' formalparlist')' ':' (statements | 'pass')
 ;
 statements
-    :({tabCounter++;}printTabs statement)*
+    :('\t'statement)*
 	|
 ;
 statement
@@ -77,7 +66,7 @@ assignmentStat
 // Two option, one with parentheses and one without
 // because python accepts both
 ifStat
-    :'\t''if' condition':''\t'statements '\t' elsepart
+    :'\t''if' condition':''\t'statements  elsepart
     |'\t''if' '('condition')'':'statements '\t'elsepart
 ;
 elsepart
@@ -138,16 +127,6 @@ optionalSign
 block
     :'\n''\t'
 ;
-
-// @TODO fix tab not workin either in java nor in the compiler
-printTabs returns [String tab]
-    :{$tab = "\t".repeat(getTabCounter());}
-    {System.out.println("tab = "+tab);}
-;
-tabs: TAB*;
-TAB: '\t';
-
-//NEWLINE: ('\n')+;
 ID: [a-zA-Z_]+ [a-zA-Z0-9_]*;
 INT: [0-9]+ ('.' [0-9]+)?; 
 REL_OP: '=='|'<='|'>='|'!='|'<'|'>';
