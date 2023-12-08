@@ -1,21 +1,75 @@
 /* 
-In this version the tabs are controlled with '\t' at proper places
+In v2_x we are working on the symbol table to implement correct access
+to memory (inheritance, etc.)
+*/
 
-The new lines have been fixed in this version
- */
 
 grammar grammar_v2_1;
+
+@parser::members {
+
+    public class SymbolTable {
+
+        // This arraylist will store the scopes and the entities
+        ArrayList <Scope> scopes_list = new ArrayList<>();
+
+        // Constructor of the SymbolTable class
+        public SymbolTable() {
+        }
+    }
+
+    private class Scope{
+        private int nestingLevel;
+
+        public Scope (int nestingLevel){
+            this.nestingLevel = nestingLevel;
+        }
+
+        public int getNestingLevel(){
+            return this.nestingLevel;
+        }
+    }
+
+    private abstract class Entity {
+        private String name;
+    
+        public Entity(String name) {
+            this.name = name;
+        }
+    
+        public String getName() {
+            return this.name;
+        }
+    }
+    
+    private class Variable extends Entity {
+    
+        public Variable(String name) {
+            super(name);
+        }
+    }
+
+}
+
 prog
-    :classes;
+    :classes
+;
 classes
-    : class ('\n' class)* main;   
+    :class ('\n' class)* main
+    {
+        Scope scope_1 = new Scope();
+        System.out.println("Scope nesting level = "+scope_1.getNestingLevel);
+    }
+;
 class
-    : 'class' ID ':' initFunction  functions;
+    : 'class' ID ':' initFunction  functions
+;
 main:
 	'if' '__name__' '==' '\'__main__\'' ':'statements
-	;
+;
 initFunction
-    :'\n''\t' 'def''__init__''('formalparlist')'':'(statements | 'pass');
+    :'\n''\t' 'def''__init__''('formalparlist')'':'(statements | 'pass')
+;
 functions
     : function ( function)*	
 	|
