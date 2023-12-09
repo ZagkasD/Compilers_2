@@ -5,65 +5,98 @@ to memory (inheritance, etc.)
 
 
 grammar grammar_v2_1;
-
+ 
 @parser::members {
+	
+    int nesting_level = 0;
+    ArrayList <Scope> scopes_list = new ArrayList<Scope>();
 
-    public class SymbolTable {
+	public class Scope{
+		private ArrayList <Entity> entities_list = new ArrayList<Entity>();
+        int _nesting_level;
+        // private nesting_level = 0;
 
-        // This arraylist will store the scopes and the entities
-        ArrayList <Scope> scopes_list = new ArrayList<>();
+		public Scope (int nesting_level){
+            
+			this._nesting_level = nesting_level;
+            // this.nesting_level += 1;
+		}
+	}
+    
+    // Add scope to scopes_list
+    public class AddScope{
+        public void add_scope(){
+            // @TODO fix nesting level
+            nesting_level += 1;
+            Scope new_scope = new Scope(nesting_level);
+            scopes_list.add(new_scope);
+        }
 
-        // Constructor of the SymbolTable class
-        public SymbolTable() {
+        public void remove_scope(){
+            int lastIndex = scopes_list.size() - 1;
+            scopes_list.remove(lastIndex);
+            // scopes_list.pop();
+            nesting_level -=1;
         }
     }
 
-    private class Scope{
-        private int nestingLevel;
+    public abstract class Entity {
+		private String name;
 
-        public Scope (int nestingLevel){
-            this.nestingLevel = nestingLevel;
-        }
+		public Entity(String name) {
+			this.name = name;
+		}
 
-        public int getNestingLevel(){
-            return this.nestingLevel;
-        }
-    }
+		// public void add(Entity EntityObj);
+	}
 
-    private abstract class Entity {
-        private String name;
-    
-        public Entity(String name) {
-            this.name = name;
-        }
-    
-        public String getName() {
-            return this.name;
-        }
-    }
-    
-    private class Variable extends Entity {
-    
-        public Variable(String name) {
-            super(name);
-        }
-    }
+	// public class Variable extends Entity {
+		
+    //     public Variable(String name) {
+	// 		super(name);
+	// 	}
+
+	// 	// public void add(String name){
+	// 	// 	EntityList.add(EntityObj);
+	// 	// }
+	// }
+
+    // public class Object extends Entity {
+        
+    // }
+
+    // public class Class extends Entity {
+
+    // }
+
+	// public class FormalParameter extends Entity{// for functions
+	// 	public FormalParameter(String name) {
+	// 		super(name);
+	// 	}
+	// }	
+
 
 }
-
+ 
 prog
     :classes
 ;
 classes
     :class ('\n' class)* main
-    {
-        Scope scope_1 = new Scope();
-        System.out.println("Scope nesting level = "+scope_1.getNestingLevel);
-    }
 ;
 class
-    : 'class' ID ':' initFunction  functions
+    : 'class' ID ':'
+    {
+        AddScope new_scope = new AddScope();
+        new_scope.add_scope();
+    }
+    initFunction  functions
+    {
+        new_scope.remove_scope();
+    }
+	|'class' ID '('ID')' ':'initFunction  functions
 ;
+ 
 main:
 	'if' '__name__' '==' '\'__main__\'' ':'statements
 ;

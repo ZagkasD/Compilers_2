@@ -43,4 +43,4 @@ if __name__ == '__main__':
 	print(peter.getDepartment())
 	print(george.getPid())
 	print(peter.getPid())
-	stupid = StupidPrint(peter)	
+	stupid = StupidPrint(peter)
