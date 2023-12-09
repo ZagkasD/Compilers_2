@@ -1,35 +1,32 @@
-grammar grammar_v1;
+/* 
+In this version the tabs are controlled with '\t' at proper places
 
+The new lines have been fixed in this version
+ */
+
+grammar grammar_v2_1;
 prog
-    :classes 
-;
- 
+    :classes;
 classes
-    : class (NEWLINE class)*
-;
-    
+    : class ('\n' class)* main;   
 class
-    : 'class' ID ':'block initFunction block functions
-;
-
+    : 'class' ID ':' initFunction  functions;
+main:
+	'if' '__name__' '==' '\'__main__\'' ':'statements
+	;
 initFunction
-    :'def''__init__''('formalparlist')'':' block (statements | 'pass')
-;
-
+    :'\n''\t' 'def''__init__''('formalparlist')'':'(statements | 'pass');
 functions
-    : function (block function)*
+    : function ( function)*	
 	|
 ;
-
 function
-    :'def' ID '(' formalparlist')' ':'block (statements | 'pass')
+    :'\n''\t' 'def' ID '(' formalparlist')' ':'(statements | 'pass')
 ;
-
 statements
-    :(statement'\n''\t')*
+    :('\n'('\t'statement)*)*
 	|
 ;
-
 statement
     :assignmentStat
     |ifStat
@@ -38,7 +35,6 @@ statement
     |returnStat
     |callStat
 ;
-
 /*
 A list of formal parameters
 eg. def foo(x)
@@ -47,12 +43,10 @@ the x would be a formal parameter item
 formalparlist
     :formalparitem (','formalparitem)*
 ;
-
 formalparitem
     :ID
     |obj
 ;
-
 /*
 A list of actual parameter items
 Used when the function is called
@@ -71,101 +65,71 @@ actualparitem
     |obj
     |ID
 ;
-
 assignmentStat
-    : ID '=' expression
+    : '\t'(ID | obj) '=' expression
 ;
-
 // Two option, one with parentheses and one without
 // because python accepts both
 ifStat
-    :'if' condition':'
-    statements
-    elsepart
-    |'if' '('condition')'':'
-    statements
-    elsepart
+    :'\t''if' condition':''\n' '\t' statements  elsepart
+    |'\t''if' '('condition')'':''\n' '\t' statements elsepart
 ;
-
 elsepart
-    :'else'':'
-    statements
+    :'else'':'  statements
     |
 ;
-
 whileStat
-    :'while' '(' condition ')' ':'
-    statements
-    |'while' condition ':'
-    statements
+    :'\t''while' '(' condition ')' ':''\n' '\t' statements
+	|'\t''while' condition ':'  '\n' '\t' statements
 ;
-
 printStat
-    :'print' '(' expression ')'
+    :'\t''print' '(' expression ')'
 ;
-
 returnStat
-    :'return' expression
-    |'return' '(' expression ')'
+    :'\t''return' expression
+    |'\t''return' '(' expression ')'
 ;
-
 callStat
-    :ID '('actualparlist')'
+    :'\t'ID '('actualparlist')'
 ;
-
 condition
     :boolterm
     ('or' boolterm)*
 ;
-
 boolterm
     :boolfactor
     ('and' boolfactor)*
 ;
-
 // Parentheses are mandatory here because of left-recursiveness error
 boolfactor
     : 'not' '(' condition ')'
     | '(' condition ')'
     | expression REL_OP expression
 ;
-
 obj 
-    :ID'.'ID assignmentStat
-    |ID'.'ID
+    :ID'.'ID 
 ;
-
 expression
-    :optionalSign term 
+	:optionalSign term 
     (ADD_OP term)*
 ;
-
 term
-    :factor
-    (MUL_OP factor)*
+    :factor (MUL_OP factor)*
 ;
-
 factor
     :INT
-    |ID
+	|ID
     // @TODO ID idtail
     |obj
     |'('expression')'
 ;
-
 optionalSign
     :ADD_OP
     |
 ;
-
-// @TODO fix \n and \t using a rule
 block
-    :'\n''\t'
-    //|NEWLINE('\t')+
-    //|NEWLINE'\t'
-    //|(NEWLINE ('\t')*)*
+    :NEWLINE'\t'
 ;
-
 NEWLINE: ('\n')+;
 ID: [a-zA-Z_]+ [a-zA-Z0-9_]*;
 INT: [0-9]+ ('.' [0-9]+)?; 
@@ -173,11 +137,5 @@ REL_OP: '=='|'<='|'>='|'!='|'<'|'>';
 ADD_OP: '+'|'-';
 MUL_OP: '*'|'/';
 COMMENT: '"""' .*? '"""' ->channel(HIDDEN);
-WS:    
-    //[ \r\t\n]+ -> skip
-    [ \r]+ -> skip
-;  
-   
-   
-   
-   
+point: '.';
+WS: [ \r]+ -> skip;
