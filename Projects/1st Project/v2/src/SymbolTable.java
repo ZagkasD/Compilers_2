@@ -9,7 +9,7 @@ public class SymbolTable {
     public SymbolTable() {
     }
 
-    protected class Scope{
+    private class Scope{
         private int nestingLevel;
 
         public Scope (int nestingLevel){
@@ -39,6 +39,10 @@ public class SymbolTable {
             super(name);
         }
         
+    }
+
+    public void add_new_scope(){
+        Scope new_scope = new Scope(0);
     }
 
     public static void main(String[] args) {

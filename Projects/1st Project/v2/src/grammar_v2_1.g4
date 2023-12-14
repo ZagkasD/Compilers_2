@@ -3,79 +3,118 @@ In v2_x we are working on the symbol table to implement correct access
 to memory (inheritance, etc.)
 */
 
+/*
+The main in test_input.py isn't in symbol table because
+there are no declarations there
+*/
+
 
 grammar grammar_v2_1;
  
 @parser::members {
 	
-    int nesting_level = 0;
     ArrayList <Scope> scopes_list = new ArrayList<Scope>();
 
 	public class Scope{
 		private ArrayList <Entity> entities_list = new ArrayList<Entity>();
-        int _nesting_level;
-        // private nesting_level = 0;
+        private int _nesting_level;
 
 		public Scope (int nesting_level){
             
 			this._nesting_level = nesting_level;
-            // this.nesting_level += 1;
 		}
-	}
-    
-    // Add scope to scopes_list
-    public class AddScope{
-        public void add_scope(){
-            // @TODO fix nesting level
-            nesting_level += 1;
-            Scope new_scope = new Scope(nesting_level);
-            scopes_list.add(new_scope);
-        }
 
-        public void remove_scope(){
-            int lastIndex = scopes_list.size() - 1;
-            scopes_list.remove(lastIndex);
-            // scopes_list.pop();
-            nesting_level -=1;
+        public int getNestingLevel(){
+            return this._nesting_level;
+        }
+	}
+
+    // public abstract class Entity {
+	// 	private String _name;
+
+	// 	public Entity(String name) {
+	// 		this._name = name;
+	// 	}
+	// }
+
+    public class Entity{
+        private String _name;
+
+        public void SetName(String name){
+            this._name = name;
         }
     }
 
-    public abstract class Entity {
-		private String name;
-
-		public Entity(String name) {
-			this.name = name;
+	public class Variable extends Entity {
+        
+        public Variable(String name) {
+			// super(name);
+            super().SetName(name);
 		}
-
-		// public void add(Entity EntityObj);
 	}
 
-	// public class Variable extends Entity {
-		
-    //     public Variable(String name) {
-	// 		super(name);
-	// 	}
+    public class Class extends Entity {
+        private String _parent;
 
-	// 	// public void add(String name){
-	// 	// 	EntityList.add(EntityObj);
-	// 	// }
-	// }
+	    public Class(String name, String parent) {
+			super(name);
+            this_parent = parent;
+		}
 
-    // public class Object extends Entity {
+        public Class(String name) {
+			super(name);
+		}
+    }
+
+	public class FormalParameter extends Entity{
+		public FormalParameter(String name) {
+			super(name);
+		}
+	}
+
+    public class Function extends Entity{
+        private ArrayList <String> formal_par_list = new ArrayList<String>();
+
+        public Function(String name) {
+            super(name);
+		}
+    }
+
+    // ===========================================================
+    // SYMBOL TABLE FUNCTIONS
+    // ===========================================================
+
+    // Add new scope to scopes_list
+    public class AddScope{
+        public void add_new_scope(){
+            // Give the proper nesting level for the new_scope
         
-    // }
+            if (scopes_list.isEmpty()){
+                Scope new_scope = new Scope(0); 
+                scopes_list.add(new_scope);   
+            }
+            else{
+                int lastIndex = scopes_list.size() - 1;
+                // Increase the nesting level from the last scope
+                int new_nesting_level = (scopes_list.get(scopes_list.size() - 1)).getNestingLevel() + 1;
+                Scope new_scope = new Scope(new_nesting_level);
+                scopes_list.add(new_scope);
+            }
+        }
 
-    // public class Class extends Entity {
+        public void remove_scope(){
+            int last_scope = scopes_list.size() - 1;
+            scopes_list.remove(last_scope);
+        }
+    }
 
-    // }
+    public class AddFunction{
+        public AddFunction
 
-	// public class FormalParameter extends Entity{// for functions
-	// 	public FormalParameter(String name) {
-	// 		super(name);
-	// 	}
-	// }	
+        public void add_new_function(){
 
-
+        }
+    }
 }
  
 prog
@@ -86,29 +125,55 @@ classes
 ;
 class
     : 'class' ID ':'
-    {
-        AddScope new_scope = new AddScope();
-        new_scope.add_scope();
+    {   
+        AddScope scope = new AddScope();
+        scope.add_new_scope();
     }
     initFunction  functions
     {
-        new_scope.remove_scope();
+        scope.remove_scope();
     }
-	|'class' ID '('ID')' ':'initFunction  functions
+	|'class' ID '('ID')' ':'
+    {   
+        AddScope scope = new AddScope();
+        scope.add_new_scope();
+    }
+    initFunction  functions
+    {
+        scope.remove_scope();
+    }
 ;
  
 main:
 	'if' '__name__' '==' '\'__main__\'' ':'statements
 ;
 initFunction
-    :'\n''\t' 'def''__init__''('formalparlist')'':'(statements | 'pass')
+    :'\n''\t' 'def''__init__''('formalparlist')'':'
+    {   
+        AddFunction function = new AddFunction('__init__');
+        function.add_new_function();
+        AddScope scope = new AddScope();
+        scope.add_new_scope();
+    }
+    (statements | 'pass')
+    {
+        scope.remove_scope();
+    }
 ;
 functions
     : function ( function)*	
 	|
 ;
 function
-    :'\n''\t' 'def' ID '(' formalparlist')' ':'(statements | 'pass')
+    :'\n''\t' 'def' ID '(' formalparlist')' ':'
+    {   
+        AddScope scope = new AddScope();
+        scope.add_new_scope();
+    }
+    (statements | 'pass')
+    {
+        scope.remove_scope();
+    }
 ;
 statements
     :('\n'('\t'statement)*)*
@@ -224,5 +289,9 @@ REL_OP: '=='|'<='|'>='|'!='|'<'|'>';
 ADD_OP: '+'|'-';
 MUL_OP: '*'|'/';
 COMMENT: '"""' .*? '"""' ->channel(HIDDEN);
+// COMMENT
+// 	: ( ' ' | '\t' )* '#' ( ~'\n' )* '\n'+ 
+// 	| '#' ( ~'\n' )* // let NEWLINE handle \n unless char pos==0 for '#'
+// 	;
 point: '.';
 WS: [ \r]+ -> skip;

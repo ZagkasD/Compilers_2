@@ -29,7 +29,8 @@ class StupidPrint:
 		print(employee.born)
 		print(employee.afm)
 		print(employee.department)
- 
+
+
 if __name__ == '__main__':
 	george = Person(200223, 2002)
 	john = Person(200055, 2000)
