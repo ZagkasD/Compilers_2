@@ -2,6 +2,20 @@
 In v3_x we are working on the output file in c
 */
 
+// TODO imports in c file
+// TODO add errors for missing functions/vars
+// TODO fix eg
+/*
+while():
+    if():
+        ...
+    else:
+        y
+    x
+}
+here x would print after } in c 
+*/
+
 grammar grammar_v3_1;
 
 @header{
@@ -10,6 +24,7 @@ grammar grammar_v3_1;
     import java.io.File;  
     import java.io.FileNotFoundException;  
     import java.util.Scanner;
+    //import tabNewlineController;
 }
 @parser::members {
     ArrayList <Scope> scopes_list = new ArrayList<Scope>();
@@ -17,9 +32,10 @@ grammar grammar_v3_1;
     WriteToFile RW;
     WriteToFile TmpRw;
     String tempNameClass;
-    String tempStatment;
     Boolean flagStatement, returnFlag;
     Boolean elseFlag = true;
+    Boolean assignFlag = false;
+    
 
     public class Scope{
         private ArrayList <Entity> entities_list = new ArrayList<Entity>();
@@ -156,7 +172,7 @@ grammar grammar_v3_1;
                 myWriter.write(str);
             }
             catch (IOException e) {
-                System.out.println("An error occurred.");
+                System.out.println("An error occurred OIOIOIOI.");
                 e.printStackTrace();
             }
         }
@@ -175,7 +191,7 @@ prog
     :classes
 ;
 classes
-    :class ('\n' class)* main
+    :class (class)* main
 ;
 class
     : 'class'
@@ -206,14 +222,20 @@ class
     }
 ;
 main:
-    'if' '__name__' '==' '\'__main__\'' ':'{RW.writeFile("int main(){\n");}statements
+    'if' '__name__' '==' '\'__main__\'' ':'
+    {
+        TmpRw.openFile("temp.c");      
+        RW.writeFile("int main(){\n");
+    }
+    statements
     {
         RW.writeFile("}\n");
+        TmpRw.closeFile();
         RW.closeFile();
     }
 ;
 initFunction
-    :'\n''\t' 'def''__init__'
+    :'def''__init__'
     {
         entity.add_new_function("__init__");
     }
@@ -248,7 +270,7 @@ functions
     |
 ;
 function
-    :'\n''\t' 'def' ID
+    :'def' ID
     {
     entity.add_new_function($ID.text);
     }
@@ -287,7 +309,7 @@ function
     }
 ;
 statements
-    :('\n'('\t'statement)*)*
+    :(statement)+
     |
 ;
 statement
@@ -295,7 +317,7 @@ statement
     |ifStat
     |whileStat
     |printStat
-    |returnStat {System.out.println("line 303"+$returnStat.text); }
+    |returnStat
     |callStat
 ;
 /*
@@ -326,35 +348,49 @@ eg. foo(boolean), that would end up in actualparitem empty option
 when it has to throw an error
 */
 actualparlist
-    :actualparitem (','actualparitem)*
+    :actualparitem (','
+    {
+        if(flagStatement == true)RW.writeFile(",");
+        else TmpRw.writeFile(",");
+    }
+    actualparitem)*
     |
 ;
 actualparitem
     :expression
     |obj
     |ID
+    {
+        if(flagStatement == true)RW.writeFile($ID.text);
+        else TmpRw.writeFile($ID.text);
+    }
 ;
 assignmentStat
-    : '\t'(
-    (ID
-    {
-        if(flagStatement == true)RW.writeFile("\t"+$ID.text);
-        else TmpRw.writeFile("\t"+$ID.text);
-    })
-    |obj ) 
+    :(
+        (
+            ID
+            {
+                if(flagStatement == true)RW.writeFile("\t"+$ID.text);
+                else TmpRw.writeFile("\t"+$ID.text);
+            }
+        )
+        |obj 
+    ) 
 	{
-		if(flagStatement == true)RW.writeFile(" = ");
+		if (flagStatement == true)RW.writeFile(" = ");
 		else TmpRw.writeFile(" = ");
-    }'=' expression
-        {
-            if(flagStatement == true)RW.writeFile(";\n");
-            else TmpRw.writeFile(";\n");
-        }
+    }
+    // expression or callStat for e.g. 	george = Person(200223, 2002)
+    '=' (expression | {assignFlag = true;} callStat)
+    {
+        if (flagStatement == true) RW.writeFile(";\n");
+        else TmpRw.writeFile(";\n");
+    }
 ;
 // Two option, one with parentheses and one without
 // because python accepts both
 ifStat
-    :'\t''if'
+    :'if'
         {
             // Need to set elseFlag false for each if
             elseFlag = false;
@@ -363,18 +399,16 @@ ifStat
         }
     condition':'
     {
-		System.out.println("line 371 in if");
         if(flagStatement==true)RW.writeFile("){\n\t");
         else TmpRw.writeFile("){\n\t");
     }
-	'\n' '\t' statements
+	    statements
 	{
-		System.out.println("line 377 }");
         if(flagStatement==true)RW.writeFile("}\n");
         else TmpRw.writeFile("}\n");
     }
     elsepart
-    |'\t''if' '('
+    |'if' '('
 	{
 		elseFlag = false;
 		if(flagStatement==true)RW.writeFile("\tif (");
@@ -385,7 +419,7 @@ ifStat
         if(flagStatement==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
-    '\n' '\t' statements
+    statements
     {
         if(flagStatement==true)RW.writeFile("}\n");
         else TmpRw.writeFile("}\n");
@@ -395,24 +429,67 @@ ifStat
 elsepart
     :'else'':'
     {
+        if(flagStatement==true)RW.writeFile("\telse {\n");
+        else TmpRw.writeFile("\telse {\n");
+        // Need this flag here to add return 0 at C when else doesn't exist
         elseFlag = true;
     }
     statements
+    {
+        if(flagStatement==true)RW.writeFile("{\n");
+        else TmpRw.writeFile("}\n");
+    }
     |
 ;
 whileStat
-    :'\t''while' '(' condition ')' ':''\n' '\t' statements
-    |'\t''while' condition ':'  '\n' '\t' statements
+    :'while' 
+    {
+            if(flagStatement==true)RW.writeFile("\twhile (");
+            else TmpRw.writeFile("\twhile (");
+    }
+    '(' condition ')' ':'
+    {
+        if(flagStatement==true)RW.writeFile("){\n\t");
+        else TmpRw.writeFile("){\n\t");
+    }
+    statements
+	{
+        if(flagStatement==true)RW.writeFile("};\n");
+        else TmpRw.writeFile("};\n");
+    }
+    |'while'
+    {
+            if(flagStatement==true)RW.writeFile("\twhile (");
+            else TmpRw.writeFile("\twhile (");
+    }
+    condition ':'
+    {
+        if(flagStatement==true)RW.writeFile("){\n\t");
+        else TmpRw.writeFile("){\n\t");
+    }
+    statements
+    {
+        if(flagStatement==true)RW.writeFile("};\n");
+        else TmpRw.writeFile("};\n");
+    }
 ;
 printStat
-    :'\t''print' '(' expression ')'
+    :'print'
+    {
+        if(flagStatement==true)RW.writeFile("printf (");
+        else TmpRw.writeFile("printf (");
+    }
+    '(' expression ')'
+    {
+        if(flagStatement==true)RW.writeFile(");\n");
+        else TmpRw.writeFile(");\n");
+    }
 ;
 returnStat
-    : '\t''return '
+    : 'return '
         {
             if(flagStatement==true)RW.writeFile("\treturn ");
             else {
-				System.out.println("line 420");
 				TmpRw.writeFile("\treturn ");
 			}
         }
@@ -422,7 +499,7 @@ returnStat
             else TmpRw.writeFile(";\n");
             returnFlag = true;
         }
-    |'\t''return ''(' 
+    |'return ''(' 
 	{
 		if(flagStatement==true)RW.writeFile("\treturn (");
 		else TmpRw.writeFile("\treturn (");
@@ -435,7 +512,29 @@ returnStat
         }
 ;
 callStat
-    :'\t'ID '('actualparlist')'
+    :obj | 
+    (ID
+    {
+        if(flagStatement==true)RW.writeFile($ID.text);
+        else TmpRw.writeFile($ID.text);
+    })
+    '('
+    {
+        if(flagStatement == true)RW.writeFile("(");
+        else TmpRw.writeFile("(");
+    }
+    actualparlist')'
+    {
+        if(flagStatement == true){
+            RW.writeFile(")");
+            if (assignFlag == false){
+                if(flagStatement == true)RW.writeFile(";");
+                else TmpRw.writeFile(";");
+                assignFlag = false;
+            }
+        }
+        else TmpRw.writeFile(")");  
+    }
 ;
 condition
     :boolterm
@@ -552,4 +651,4 @@ COMMENT: '"""' .*? '"""' ->channel(HIDDEN);
 //  | '#' ( ~'\n' )* // let NEWLINE handle \n unless char pos==0 for '#'
 //  ;
 point: '.';
-WS: [ \r]+ -> skip;
+WS: [ \r\n\t]+ -> skip;

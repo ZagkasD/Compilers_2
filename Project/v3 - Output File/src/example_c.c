@@ -24,7 +24,7 @@ int Person_millenium(Person *self) {
     }
     return 0;
 }
- 
+printf();
 typedef struct {
     Person base;
     int afm;
