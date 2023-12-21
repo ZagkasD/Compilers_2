@@ -5,15 +5,22 @@ In v3_x we are working on the output file in c
 grammar grammar_v3_1;
 
 @header{
-	import java.io.FileWriter;   
-	import java.io.IOException;  
+    import java.io.FileWriter;  
+    import java.io.IOException;  
+    import java.io.File;  
+    import java.io.FileNotFoundException;  
+    import java.util.Scanner;
 }
 @parser::members {
     ArrayList <Scope> scopes_list = new ArrayList<Scope>();
     addEntity entity;
-	WriteToFile RW;
-	String tempNameClass;
-	String tempReturnTypeFun = "void";
+    WriteToFile RW;
+    WriteToFile TmpRw;
+    String tempNameClass;
+    String tempStatment;
+    Boolean flagStatement, returnFlag;
+    Boolean elseFlag = true;
+
     public class Scope{
         private ArrayList <Entity> entities_list = new ArrayList<Entity>();
         private int _nesting_level;
@@ -116,35 +123,53 @@ grammar grammar_v3_1;
             }
         }
     }
-	public class WriteToFile {
-		private FileWriter myWriter;
-		public void openFile(String filename) {
-			try {
-			  myWriter = new FileWriter("C:\\Users\\Damianos\\Desktop\\"+filename);
-			} catch (IOException e) {
-			  System.out.println("Opene file,an error occurred.");
-			  e.printStackTrace();
-			}
-		}
-		public void writeFile(String str) {
-			try {
-				myWriter.write(str);
-			}
-			catch (IOException e) {
-				System.out.println("An error occurred.");
-				e.printStackTrace();
-			}
-		}
-		public void closeFile() {
-			try {
-				myWriter.close();
-			}
-			catch (IOException e) {
-				System.out.println("An error occurred.");
-				e.printStackTrace();
-			}
-		}
-	}
+    public class WriteToFile {
+        private FileWriter myWriter;
+        public void openFile(String filename) {
+            try {
+              myWriter = new FileWriter("C:\\Users\\Zagkas\\Downloads\\"+filename);
+            } catch (IOException e) {
+              System.out.println("Open file,an error occurred.");
+              e.printStackTrace();
+            }
+        }
+        public void merge(String filename)
+        {
+            try {
+                File temp = new File("C:\\Users\\Zagkas\\Downloads\\"+filename);
+                if (returnFlag == true) writeFile("int ");
+                else writeFile("void ");
+                // Write temp file to original file
+                Scanner myReader = new Scanner(temp);
+                while (myReader.hasNextLine()) {
+                    String data = myReader.nextLine();
+                    writeFile(data+"\n");
+                }
+                myReader.close();
+            } catch (FileNotFoundException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+        }
+        public void writeFile(String str) {
+            try {
+                myWriter.write(str);
+            }
+            catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+        }
+        public void closeFile() {
+            try {
+                myWriter.close();
+            }
+            catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+        }
+    }
 }
 prog
     :classes
@@ -153,23 +178,27 @@ classes
     :class ('\n' class)* main
 ;
 class
-    : 'class'{RW = new WriteToFile();RW.openFile("testC.c");RW.writeFile("#include <stdio.h>\n");} ID ':'
+    : 'class'
+    {
+        RW = new WriteToFile();
+        RW.openFile("testC.c");
+        RW.writeFile("#include <stdio.h>\n");} ID ':'
     {  
         AddScope scope = new AddScope();
         scope.add_new_scope();
         entity = new addEntity();
-		tempNameClass = $ID.text;
-		RW.writeFile("\ntypedef struct{ \n");
+        tempNameClass = $ID.text;
+        RW.writeFile("\ntypedef struct{ \n");
     }
     initFunction functions
     {
         scope.remove_scope();
-    }	
+    }  
     |'class' ID{tempNameClass = $ID.text;} '('ID')' ':'
     {  
         AddScope scope = new AddScope();
         scope.add_new_scope();
-		RW.writeFile("\ntypedef struct{ \n");
+        RW.writeFile("\ntypedef struct{ \n");
     }
     initFunction  functions
     {
@@ -178,10 +207,10 @@ class
 ;
 main:
     'if' '__name__' '==' '\'__main__\'' ':'{RW.writeFile("int main(){\n");}statements
-	{
-		RW.writeFile("}\n");
-		RW.closeFile();
-	}
+    {
+        RW.writeFile("}\n");
+        RW.closeFile();
+    }
 ;
 initFunction
     :'\n''\t' 'def''__init__'
@@ -192,24 +221,25 @@ initFunction
     {  
         AddScope scope = new AddScope();
         scope.add_new_scope();
+        ArrayList <Entity> entities_list = scopes_list.get(scopes_list.size()-2).getEntitiesList();
+        Function fun = (Function) entities_list.get(entities_list.size()-1);
+        //we use this for to fill the struct
+        for(int i=0;i<fun.getFormalParList().size();i++){
+            if(i>0)RW.writeFile("\tint "+fun.getFormalParList().get(i).getName()+";\n");
+        }
+        RW.writeFile("}"+tempNameClass+";\n");
+        //for the parameters
+        for(int i=0;i<fun.getFormalParList().size();i++){
+            if(i==0)RW.writeFile("void "+tempNameClass+"_init ("+tempNameClass+" *"+fun.getFormalParList().get(i).getName());
+            else if(i>0)RW.writeFile(",int "+fun.getFormalParList().get(i).getName());
+        }
+        RW.writeFile(") {\n");
+        flagStatement = true;
     }
     (statements | 'pass')
     {
-		ArrayList <Entity> entities_list = scopes_list.get(scopes_list.size()-2).getEntitiesList();
-        Function fun = (Function) entities_list.get(entities_list.size()-1);
-		for(int i=0;i<fun.getFormalParList().size();i++){
-			if(i>0)RW.writeFile("\tint "+fun.getFormalParList().get(i).getName()+";\n");
-		}
-		RW.writeFile("}"+tempNameClass+";\n");
-		for(int i=0;i<fun.getFormalParList().size();i++){
-			if(i==0){
-				RW.writeFile("\n"+tempReturnTypeFun+" "+tempNameClass+"_init ("+tempNameClass+"*"+fun.getFormalParList().get(i).getName());
-				tempReturnTypeFun = "void";
-			}
-			else if(i>0)RW.writeFile(",int "+fun.getFormalParList().get(i).getName());
-		}
-		RW.writeFile(") {\n");
-		RW.writeFile("\n}\n");
+        flagStatement = false;
+        RW.writeFile("\n}\n");
         scope.remove_scope();
     }
 ;
@@ -226,22 +256,33 @@ function
     {  
         AddScope scope = new AddScope();
         scope.add_new_scope();
+        ArrayList <Entity> entities_list = scopes_list.get(scopes_list.size()-2).getEntitiesList();
+        Function fun = (Function) entities_list.get(entities_list.size()-1);
+        //grafoume se tmp arxeio epidi theloyme na doume ti topos einai h sinartisi
+        TmpRw = new WriteToFile();
+        TmpRw.openFile("temp.c");      
+        for(int i=0;i<fun.getFormalParList().size();i++)
+        {
+            // If it only has self as a parameter
+            if(i==0){
+                TmpRw.writeFile(" "+tempNameClass+"_"+$ID.text+" ("+tempNameClass+" *"+fun.getFormalParList().get(i).getName());
+            }
+            // If it has more parameters than self
+            else if(i>0)TmpRw.writeFile(",int "+fun.getFormalParList().get(i).getName());
+        }
+        TmpRw.writeFile(") {\n");
     }
     (statements | 'pass')
     {
-		ArrayList <Entity> entities_list = scopes_list.get(scopes_list.size()-2).getEntitiesList();
-        Function fun = (Function) entities_list.get(entities_list.size()-1);
-		for(int i=0;i<fun.getFormalParList().size();i++){
-			if(i==0){
-				RW.writeFile("\n"+tempReturnTypeFun+" "+tempNameClass+"_"+$ID.text+" ("+tempNameClass+"*"+fun.getFormalParList().get(i).getName());
-				tempReturnTypeFun = "void";
-			}
-			else if(i>0)RW.writeFile(",int "+fun.getFormalParList().get(i).getName());
-		}
-		RW.writeFile(") {\n");
-		//todoo diorthoseto an mporeis egw kourastika 
-		RW.writeFile($statements.text);
-		RW.writeFile("\n}\n");
+		if (elseFlag == false){
+			TmpRw.writeFile("\treturn 0;\n");
+			elseFlag = true;
+        }
+        TmpRw.writeFile("\n}\n");
+        TmpRw.closeFile();
+        // Reset the return flag for the next function
+        RW.merge("temp.c");
+        returnFlag = false;
         scope.remove_scope();
     }
 ;
@@ -254,7 +295,7 @@ statement
     |ifStat
     |whileStat
     |printStat
-    |returnStat
+    |returnStat {System.out.println("line 303"+$returnStat.text); }
     |callStat
 ;
 /*
@@ -294,16 +335,69 @@ actualparitem
     |ID
 ;
 assignmentStat
-    : '\t'(ID | obj) '=' expression
+    : '\t'(
+    (ID
+    {
+        if(flagStatement == true)RW.writeFile("\t"+$ID.text);
+        else TmpRw.writeFile("\t"+$ID.text);
+    })
+    |obj ) 
+	{
+		if(flagStatement == true)RW.writeFile(" = ");
+		else TmpRw.writeFile(" = ");
+    }'=' expression
+        {
+            if(flagStatement == true)RW.writeFile(";\n");
+            else TmpRw.writeFile(";\n");
+        }
 ;
 // Two option, one with parentheses and one without
 // because python accepts both
 ifStat
-    :'\t''if' condition':''\n' '\t' statements  elsepart
-    |'\t''if' '('condition')'':''\n' '\t' statements elsepart
+    :'\t''if'
+        {
+            // Need to set elseFlag false for each if
+            elseFlag = false;
+            if(flagStatement==true)RW.writeFile("\tif (");
+            else TmpRw.writeFile("\tif (");
+        }
+    condition':'
+    {
+		System.out.println("line 371 in if");
+        if(flagStatement==true)RW.writeFile("){\n\t");
+        else TmpRw.writeFile("){\n\t");
+    }
+	'\n' '\t' statements
+	{
+		System.out.println("line 377 }");
+        if(flagStatement==true)RW.writeFile("}\n");
+        else TmpRw.writeFile("}\n");
+    }
+    elsepart
+    |'\t''if' '('
+	{
+		elseFlag = false;
+		if(flagStatement==true)RW.writeFile("\tif (");
+		else TmpRw.writeFile("\tif (");
+    }
+	condition')'':'
+    {
+        if(flagStatement==true)RW.writeFile("){\n");
+        else TmpRw.writeFile("){\n");
+    }
+    '\n' '\t' statements
+    {
+        if(flagStatement==true)RW.writeFile("}\n");
+        else TmpRw.writeFile("}\n");
+    }
+    elsepart
 ;
 elsepart
-    :'else'':'  statements
+    :'else'':'
+    {
+        elseFlag = true;
+    }
+    statements
     |
 ;
 whileStat
@@ -314,45 +408,133 @@ printStat
     :'\t''print' '(' expression ')'
 ;
 returnStat
-    :'\t''return' {tempReturnTypeFun = "int";}expression
-    |'\t''return' '(' expression ')'
+    : '\t''return '
+        {
+            if(flagStatement==true)RW.writeFile("\treturn ");
+            else {
+				System.out.println("line 420");
+				TmpRw.writeFile("\treturn ");
+			}
+        }
+        expression
+        {
+            if(flagStatement==true)RW.writeFile(";\n");
+            else TmpRw.writeFile(";\n");
+            returnFlag = true;
+        }
+    |'\t''return ''(' 
+	{
+		if(flagStatement==true)RW.writeFile("\treturn (");
+		else TmpRw.writeFile("\treturn (");
+    }
+	expression ')'
+        {
+            if(flagStatement==true)RW.writeFile(");\n");
+            else TmpRw.writeFile(");\n");
+            returnFlag = true;
+        }
 ;
 callStat
     :'\t'ID '('actualparlist')'
 ;
 condition
     :boolterm
-    ('or' boolterm)*
+    ('or'
+    {
+        if(flagStatement==true)RW.writeFile(" or ");
+        else TmpRw.writeFile(" or ");
+    }
+    boolterm)*
 ;
 boolterm
     :boolfactor
-    ('and' boolfactor)*
+    ('and'
+    {
+        if(flagStatement==true)RW.writeFile(" and ");
+        else TmpRw.writeFile(" and ");
+    }
+    boolfactor)*
 ;
 // Parentheses are mandatory here because of left-recursiveness error
 boolfactor
-    : 'not' '(' condition ')'
-    | '(' condition ')'
-    | expression REL_OP expression
+    : 'not' '('
+    {
+        if(flagStatement==true)RW.writeFile(" not (");
+        else TmpRw.writeFile(" not (");
+    }
+    condition ')'
+    {
+        if(flagStatement==true)RW.writeFile(")");
+        else TmpRw.writeFile(")");        
+    }
+    | '('
+    {
+        if(flagStatement==true)RW.writeFile("(");
+        else TmpRw.writeFile("(");        
+    }
+    condition ')'
+    {
+        if(flagStatement==true)RW.writeFile(")");
+        else TmpRw.writeFile(")");        
+    }
+    | expression REL_OP
+    {
+        if(flagStatement==true)RW.writeFile($REL_OP.text);
+        else TmpRw.writeFile($REL_OP.text);        
+    }
+    expression
 ;
 obj
-    :ID'.'ID
+    :ID
+        {
+            if(flagStatement == true)RW.writeFile("\t"+$ID.text+"->");
+            else TmpRw.writeFile("\t"+$ID.text+"->");
+        }
+    '.'ID
+        {
+            if(flagStatement == true)RW.writeFile($ID.text);
+            else TmpRw.writeFile($ID.text);
+        }
 ;
 expression
-    :optionalSign term
-    (ADD_OP term)*
+    :optionalSign
+    {
+        if(flagStatement==true)RW.writeFile($optionalSign.text);
+        else TmpRw.writeFile($optionalSign.text);
+    }
+    term
+    (ADD_OP
+    {
+        if(flagStatement==true)RW.writeFile($ADD_OP.text);
+        else TmpRw.writeFile($ADD_OP.text);  
+    }
+    term)*
 ;
 term
-    :factor (MUL_OP{RW.writeFile($MUL_OP.text);} factor)*
+    :factor (MUL_OP
+    {
+        if(flagStatement==true)RW.writeFile($MUL_OP.text);
+        else TmpRw.writeFile($MUL_OP.text);
+    }
+    factor)*
 ;
 factor
     :INT
-    |ID 
+    {
+        if(flagStatement==true)RW.writeFile($INT.text);
+        else TmpRw.writeFile($INT.text);
+    }
+    |ID
+    {
+        if(flagStatement==true)RW.writeFile($ID.text);
+        else TmpRw.writeFile($ID.text);
+    }
     // @TODO ID idtail
     |obj
     |'('expression')'
 ;
 optionalSign
-    :ADD_OP{RW.writeFile($ADD_OP.text);}
+    :ADD_OP
     |
 ;
 block
