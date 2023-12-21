@@ -15,6 +15,7 @@ while():
 }
 here x would print after } in c 
 */
+// TODO when in main, don't write void 
 
 grammar grammar_v3_1;
 
@@ -35,8 +36,7 @@ grammar grammar_v3_1;
     Boolean flagStatement, returnFlag;
     Boolean elseFlag = true;
     Boolean assignFlag = false;
-    
-
+	int tabCounter = 0;
     public class Scope{
         private ArrayList <Entity> entities_list = new ArrayList<Entity>();
         private int _nesting_level;
@@ -143,7 +143,7 @@ grammar grammar_v3_1;
         private FileWriter myWriter;
         public void openFile(String filename) {
             try {
-              myWriter = new FileWriter("C:\\Users\\Zagkas\\Downloads\\"+filename);
+              myWriter = new FileWriter("C:\\Users\\ZagkasD\\Downloads\\"+filename);
             } catch (IOException e) {
               System.out.println("Open file,an error occurred.");
               e.printStackTrace();
@@ -152,7 +152,7 @@ grammar grammar_v3_1;
         public void merge(String filename)
         {
             try {
-                File temp = new File("C:\\Users\\Zagkas\\Downloads\\"+filename);
+                File temp = new File("C:\\Users\\ZagkasD\\Downloads\\"+filename);
                 if (returnFlag == true) writeFile("int ");
                 else writeFile("void ");
                 // Write temp file to original file
@@ -191,14 +191,15 @@ prog
     :classes
 ;
 classes
-    :class (class)* main
-;
-class
-    : 'class'
-    {
+    : {
         RW = new WriteToFile();
         RW.openFile("testC.c");
-        RW.writeFile("#include <stdio.h>\n");} ID ':'
+        RW.writeFile("#include <stdio.h>\n");
+	}class+ main
+;
+class
+    : 'class' 
+	ID ':'
     {  
         AddScope scope = new AddScope();
         scope.add_new_scope();
@@ -224,19 +225,23 @@ class
 main:
     'if' '__name__' '==' '\'__main__\'' ':'
     {
+		tabCounter+=1;
         TmpRw.openFile("temp.c");      
         RW.writeFile("int main(){\n");
     }
     statements
     {
-        RW.writeFile("}\n");
         TmpRw.closeFile();
-        RW.closeFile();
+        // Reset the return flag for the next function
+        RW.merge("temp.c");
+		RW.writeFile("}\n");
+		RW.closeFile();
     }
 ;
 initFunction
     :'def''__init__'
     {
+		tabCounter +=1;
         entity.add_new_function("__init__");
     }
     '('formalparlist')'':'
@@ -247,7 +252,7 @@ initFunction
         Function fun = (Function) entities_list.get(entities_list.size()-1);
         //we use this for to fill the struct
         for(int i=0;i<fun.getFormalParList().size();i++){
-            if(i>0)RW.writeFile("\tint "+fun.getFormalParList().get(i).getName()+";\n");
+            if(i>0)RW.writeFile("\t".repeat(tabCounter)+"int "+fun.getFormalParList().get(i).getName()+";\n");
         }
         RW.writeFile("}"+tempNameClass+";\n");
         //for the parameters
@@ -263,6 +268,7 @@ initFunction
         flagStatement = false;
         RW.writeFile("\n}\n");
         scope.remove_scope();
+		tabCounter -=1;
     }
 ;
 functions
@@ -272,7 +278,8 @@ functions
 function
     :'def' ID
     {
-    entity.add_new_function($ID.text);
+		tabCounter +=1;
+		entity.add_new_function($ID.text);
     }
     '(' formalparlist')' ':'
     {  
@@ -296,9 +303,9 @@ function
     }
     (statements | 'pass')
     {
-		if (elseFlag == false){
-			TmpRw.writeFile("\treturn 0;\n");
-			elseFlag = true;
+        if (elseFlag == false){
+            TmpRw.writeFile("\t".repeat(tabCounter)+"return 0;\n");
+            elseFlag = true;
         }
         TmpRw.writeFile("\n}\n");
         TmpRw.closeFile();
@@ -306,6 +313,7 @@ function
         RW.merge("temp.c");
         returnFlag = false;
         scope.remove_scope();
+		tabCounter -=1;
     }
 ;
 statements
@@ -370,17 +378,17 @@ assignmentStat
         (
             ID
             {
-                if(flagStatement == true)RW.writeFile("\t"+$ID.text);
-                else TmpRw.writeFile("\t"+$ID.text);
+                if(flagStatement == true)RW.writeFile("\t".repeat(tabCounter)+$ID.text);
+                else TmpRw.writeFile("\t".repeat(tabCounter)+$ID.text);
             }
         )
-        |obj 
-    ) 
-	{
-		if (flagStatement == true)RW.writeFile(" = ");
-		else TmpRw.writeFile(" = ");
+        |obj
+    )
+    {
+        if (flagStatement == true)RW.writeFile(" = ");
+        else TmpRw.writeFile(" = ");
     }
-    // expression or callStat for e.g. 	george = Person(200223, 2002)
+    // expression or callStat for e.g.  george = Person(200223, 2002)
     '=' (expression | {assignFlag = true;} callStat)
     {
         if (flagStatement == true) RW.writeFile(";\n");
@@ -394,90 +402,98 @@ ifStat
         {
             // Need to set elseFlag false for each if
             elseFlag = false;
-            if(flagStatement==true)RW.writeFile("\tif (");
-            else TmpRw.writeFile("\tif (");
+            if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
+            else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
         }
     condition':'
     {
-        if(flagStatement==true)RW.writeFile("){\n\t");
-        else TmpRw.writeFile("){\n\t");
+		tabCounter +=1;
+        if(flagStatement==true)RW.writeFile("){\n");
+        else TmpRw.writeFile("){\n");
     }
-	    statements
-	{
-        if(flagStatement==true)RW.writeFile("}\n");
-        else TmpRw.writeFile("}\n");
+        statements
+    {
+		tabCounter -=1;
+        if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     elsepart
     |'if' '('
-	{
-		elseFlag = false;
-		if(flagStatement==true)RW.writeFile("\tif (");
-		else TmpRw.writeFile("\tif (");
-    }
-	condition')'':'
     {
+        elseFlag = false;
+        if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
+        else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
+    }
+    condition')'':'
+    {
+		tabCounter +=1;
         if(flagStatement==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
     statements
     {
-        if(flagStatement==true)RW.writeFile("}\n");
-        else TmpRw.writeFile("}\n");
+		tabCounter -=1;
+        if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     elsepart
 ;
 elsepart
     :'else'':'
     {
-        if(flagStatement==true)RW.writeFile("\telse {\n");
-        else TmpRw.writeFile("\telse {\n");
+        if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"else {\n");
+        else TmpRw.writeFile("\t".repeat(tabCounter)+"else {\n");
         // Need this flag here to add return 0 at C when else doesn't exist
         elseFlag = true;
     }
     statements
     {
-        if(flagStatement==true)RW.writeFile("{\n");
-        else TmpRw.writeFile("}\n");
+        if(flagStatement==true)RW.writeFile("}\n");
+        else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     |
 ;
 whileStat
-    :'while' 
+    :'while'
     {
-            if(flagStatement==true)RW.writeFile("\twhile (");
-            else TmpRw.writeFile("\twhile (");
+            if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"while (");
+            else TmpRw.writeFile("\t".repeat(tabCounter)+"while (");
     }
     '(' condition ')' ':'
     {
-        if(flagStatement==true)RW.writeFile("){\n\t");
-        else TmpRw.writeFile("){\n\t");
+		tabCounter +=1;
+        if(flagStatement==true)RW.writeFile("){\n");
+        else TmpRw.writeFile("){\n");
     }
     statements
-	{
-        if(flagStatement==true)RW.writeFile("};\n");
-        else TmpRw.writeFile("};\n");
+    {
+		tabCounter -=1;
+        if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     |'while'
     {
-            if(flagStatement==true)RW.writeFile("\twhile (");
-            else TmpRw.writeFile("\twhile (");
+		if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"while (");
+		else TmpRw.writeFile("\t".repeat(tabCounter)+"while (");
     }
     condition ':'
     {
-        if(flagStatement==true)RW.writeFile("){\n\t");
-        else TmpRw.writeFile("){\n\t");
+		tabCounter +=1;
+        if(flagStatement==true)RW.writeFile("){\n");
+        else TmpRw.writeFile("){\n");
     }
     statements
     {
-        if(flagStatement==true)RW.writeFile("};\n");
-        else TmpRw.writeFile("};\n");
+		tabCounter -=1;
+        if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
 ;
 printStat
     :'print'
     {
-        if(flagStatement==true)RW.writeFile("printf (");
-        else TmpRw.writeFile("printf (");
+        if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"printf (");
+        else TmpRw.writeFile("\t".repeat(tabCounter)+"printf (");
     }
     '(' expression ')'
     {
@@ -488,10 +504,10 @@ printStat
 returnStat
     : 'return '
         {
-            if(flagStatement==true)RW.writeFile("\treturn ");
+            if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"return ");
             else {
-				TmpRw.writeFile("\treturn ");
-			}
+                TmpRw.writeFile("\t".repeat(tabCounter)+"return ");
+            }
         }
         expression
         {
@@ -499,12 +515,12 @@ returnStat
             else TmpRw.writeFile(";\n");
             returnFlag = true;
         }
-    |'return ''(' 
-	{
-		if(flagStatement==true)RW.writeFile("\treturn (");
-		else TmpRw.writeFile("\treturn (");
+    |'return ''('
+    {
+        if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"return (");
+        else TmpRw.writeFile("\t".repeat(tabCounter)+"return (");
     }
-	expression ')'
+    expression ')'
         {
             if(flagStatement==true)RW.writeFile(");\n");
             else TmpRw.writeFile(");\n");
@@ -512,11 +528,11 @@ returnStat
         }
 ;
 callStat
-    :obj | 
+    :obj |
     (ID
     {
-        if(flagStatement==true)RW.writeFile($ID.text);
-        else TmpRw.writeFile($ID.text);
+        if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+$ID.text);
+        else TmpRw.writeFile("\t".repeat(tabCounter)+$ID.text);
     })
     '('
     {
@@ -586,8 +602,8 @@ boolfactor
 obj
     :ID
         {
-            if(flagStatement == true)RW.writeFile("\t"+$ID.text+"->");
-            else TmpRw.writeFile("\t"+$ID.text+"->");
+            if(flagStatement == true)RW.writeFile("\t".repeat(tabCounter)+$ID.text+"->");
+            else TmpRw.writeFile("\t".repeat(tabCounter)+$ID.text+"->");
         }
     '.'ID
         {
@@ -636,9 +652,7 @@ optionalSign
     :ADD_OP
     |
 ;
-block
-    :NEWLINE'\t'
-;
+ 
 NEWLINE: ('\n')+;
 ID: [a-zA-Z_]+ [a-zA-Z0-9_]*;
 INT: [0-9]+ ('.' [0-9]+)?;
