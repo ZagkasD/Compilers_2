@@ -13,7 +13,7 @@ while():
         y
     x
 }
-here x would print after } in c 
+here x would print after }, outside of while, in c  file
 */
 // TODO when in main, don't write void 
 
@@ -32,11 +32,13 @@ grammar grammar_v3_1;
     addEntity entity;
     WriteToFile RW;
     WriteToFile TmpRw;
-    String tempNameClass;
+    String tempNameClass,line;
     Boolean flagStatement, returnFlag;
     Boolean elseFlag = true;
     Boolean assignFlag = false;
 	int tabCounter = 0;
+	File pyFile;
+	Scanner myReader;
     public class Scope{
         private ArrayList <Entity> entities_list = new ArrayList<Entity>();
         private int _nesting_level;
@@ -143,7 +145,7 @@ grammar grammar_v3_1;
         private FileWriter myWriter;
         public void openFile(String filename) {
             try {
-              myWriter = new FileWriter("C:\\Users\\ZagkasD\\Downloads\\"+filename);
+              myWriter = new FileWriter("C:\\Users\\Damianos\\Desktop\\"+filename);
             } catch (IOException e) {
               System.out.println("Open file,an error occurred.");
               e.printStackTrace();
@@ -152,7 +154,7 @@ grammar grammar_v3_1;
         public void merge(String filename)
         {
             try {
-                File temp = new File("C:\\Users\\ZagkasD\\Downloads\\"+filename);
+                File temp = new File("C:\\Users\\Damianos\\Desktop\\"+filename);
                 if (returnFlag == true) writeFile("int ");
                 else writeFile("void ");
                 // Write temp file to original file
@@ -186,21 +188,63 @@ grammar grammar_v3_1;
             }
         }
     }
+	public int ReturnTotalNumberOftabs(String line){
+		int total = 0;
+		boolean exit = false;
+		if (!(line.startsWith("class"))){
+			while (myReader.hasNextLine()){
+				for (int i = 0; i < line.length(); i++) {
+					char ch = line.charAt(i);
+					if (ch != '\n' && ch != '\t' && ch != ' ') {
+						exit = true;
+					}
+					else {
+						exit = false;
+						break;
+					}
+				}
+				if (exit == true){
+					line = myReader.nextLine();
+				}
+				else break;
+			}
+		}
+		for (int i = 0; i < line.length(); i++) {
+		  char ch = line.charAt(i);
+		  if (ch == ' ' || ch == '\t') {
+			total++;
+		  }
+		  else return total;
+		}
+		return total;
+	}
 }
 prog
     :classes
 ;
 classes
     : {
+		pyFile = new File("input.py");
+		try{
+			myReader = new Scanner(pyFile);
+		}catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
         RW = new WriteToFile();
         RW.openFile("testC.c");
         RW.writeFile("#include <stdio.h>\n");
-	}class+ main
+	}class+ {myReader.close();} main
 ;
 class
-    : 'class' 
-	ID ':'
+    : 'class' ID ':'
     {  
+		line = myReader.nextLine();
+		if(ReturnTotalNumberOftabs(line)!=tabCounter)
+		{
+			System.out.println("Check your tabs in the begining of your class");
+			System.exit(0);
+		}
         AddScope scope = new AddScope();
         scope.add_new_scope();
         entity = new addEntity();
@@ -211,7 +255,15 @@ class
     {
         scope.remove_scope();
     }  
-    |'class' ID{tempNameClass = $ID.text;} '('ID')' ':'
+    |'class' ID{
+		line = myReader.nextLine();
+		if(ReturnTotalNumberOftabs(line)!=tabCounter)
+		{
+			System.out.println("Check your tabs in the begining of your class");
+			System.exit(0);
+		}
+		tempNameClass = $ID.text;
+	} '('ID')' ':'
     {  
         AddScope scope = new AddScope();
         scope.add_new_scope();
@@ -242,6 +294,12 @@ initFunction
     :'def''__init__'
     {
 		tabCounter +=1;
+		line = myReader.nextLine();
+		if(ReturnTotalNumberOftabs(line)!=tabCounter)
+		{
+			System.out.println("Check your tabs near line: "+line);
+			System.exit(0);
+		}
         entity.add_new_function("__init__");
     }
     '('formalparlist')'':'
@@ -279,6 +337,12 @@ function
     :'def' ID
     {
 		tabCounter +=1;
+		line = myReader.nextLine();
+		if(ReturnTotalNumberOftabs(line)!=tabCounter)
+		{
+			System.out.println("Check your tabs near line: "+line);
+			System.exit(0);
+		}
 		entity.add_new_function($ID.text);
     }
     '(' formalparlist')' ':'
@@ -322,11 +386,43 @@ statements
 ;
 statement
     :assignmentStat
+	{
+		line = myReader.nextLine();
+		if(ReturnTotalNumberOftabs(line)!=tabCounter+1)
+		{
+			System.out.println("Check your tabs near line: "+line);
+			System.exit(0);
+		}
+	}
     |ifStat
-    |whileStat
+	|whileStat
     |printStat
+	{
+		line = myReader.nextLine();
+		if(ReturnTotalNumberOftabs(line)!=tabCounter+1)
+		{
+			System.out.println("Check your tabs near line: "+line);
+			System.exit(0);
+		}
+	}
     |returnStat
+	{
+		line = myReader.nextLine();
+		if(ReturnTotalNumberOftabs(line)!=tabCounter+1)
+		{
+			System.out.println("Check your tabs near line: "+line);
+			System.exit(0);
+		}
+	}
     |callStat
+	{
+		line = myReader.nextLine();
+		if(ReturnTotalNumberOftabs(line)!=tabCounter+1)
+		{
+			System.out.println("Check your tabs near line: "+line);
+			System.exit(0);
+		}
+	}
 ;
 /*
 A list of formal parameters
@@ -400,6 +496,12 @@ assignmentStat
 ifStat
     :'if'
         {
+			line = myReader.nextLine();
+			if(ReturnTotalNumberOftabs(line)!=tabCounter+1)
+			{
+				System.out.println("Check your tabs near line: "+line);
+				System.exit(0);
+			}
             // Need to set elseFlag false for each if
             elseFlag = false;
             if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
@@ -420,6 +522,12 @@ ifStat
     elsepart
     |'if' '('
     {
+		line = myReader.nextLine();
+		if(ReturnTotalNumberOftabs(line)!=tabCounter+1)
+		{
+			System.out.println("Check your tabs near line: "+line);
+			System.exit(0);
+		}
         elseFlag = false;
         if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
@@ -441,13 +549,21 @@ ifStat
 elsepart
     :'else'':'
     {
+		line = myReader.nextLine();
+		if(ReturnTotalNumberOftabs(line)!=tabCounter+1)
+		{
+			System.out.println("Check your tabs near line: "+line);
+			System.exit(0);
+		}
         if(flagStatement==true)RW.writeFile("\t".repeat(tabCounter)+"else {\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"else {\n");
         // Need this flag here to add return 0 at C when else doesn't exist
         elseFlag = true;
+		tabCounter+=1;
     }
     statements
     {
+		tabCounter-=1;
         if(flagStatement==true)RW.writeFile("}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
