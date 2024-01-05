@@ -10,7 +10,7 @@ class Person:
 		if self.born < 2000:
 			return 1
 		else:
-			return 0
+			return 2
 	
 class Employee(Person):
 	def __init__(self, pid, born, afm, department):
