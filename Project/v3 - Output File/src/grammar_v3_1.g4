@@ -145,7 +145,7 @@ grammar grammar_v3_1;
         private FileWriter myWriter;
         public void openFile(String filename) {
             try {
-              myWriter = new FileWriter("C:\\Users\\Damianos\\Desktop\\"+filename);
+              myWriter = new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+filename);
             } catch (IOException e) {
               System.out.println("Open file,an error occurred.");
               e.printStackTrace();
@@ -154,7 +154,7 @@ grammar grammar_v3_1;
         public void merge(String filename)
         {
             try {
-                File temp = new File("C:\\Users\\Damianos\\Desktop\\"+filename);
+                File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+filename);
                 if (returnFlag == true) writeFile("int ");
                 else writeFile("void ");
                 // Write temp file to original file
@@ -224,7 +224,7 @@ prog
 ;
 classes
     : {
-		pyFile = new File("input.py");
+		pyFile = new File("test_input.py");
 		try{
 			myReader = new Scanner(pyFile);
 		}catch (IOException e) {
