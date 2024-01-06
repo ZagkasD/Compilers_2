@@ -2,17 +2,8 @@
 In v3_x we are working on the output file in c
 */
 // TODO add errors for missing functions/vars
-// TODO formal parameters in functions when they are objects in main eg. stupid = StupidPrint(peter)
-// in c StupidPrint_init(&stupid, &peter);
-// TODO add semi column and \n at Employee_setDepartment(2) and the comma in its parameters
-
-// Comment line 547: explanation on these things. Needed for removing the extra stuff
-// like new lines, semi columns and equals. 
-
-// changes line 234
-
-grammar grammar_v3_2;
-
+// TODO formal parameters in functions when they are objects eg.int Person_getPid(Person *self)
+grammar ExprParser;
 @header{
 	import java.io.BufferedReader;
 	import java.io.BufferedWriter;
@@ -148,7 +139,7 @@ grammar grammar_v3_2;
         public void openFile(String filename,boolean f) {
 			this.filename = filename;
             try {
-              myWriter = new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+filename,f);
+              myWriter = new FileWriter("C:\\Users\\Damianos\\Desktop\\"+filename,f);
             } catch (IOException e) {
               System.out.println("Open file,an error occurred.");
               e.printStackTrace();
@@ -157,7 +148,7 @@ grammar grammar_v3_2;
         public void merge(String filename)
         {
             try {
-                File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+filename);
+                File temp = new File("C:\\Users\\Damianos\\Desktop\\"+filename);
                 if (returnFlag == 1) writeFile("int ");
                 else if(returnFlag !=-1 )writeFile("void ");
                 // Write temp file to original file
@@ -177,14 +168,13 @@ grammar grammar_v3_2;
                 myWriter.write(str);
             }
             catch (IOException e) {
-                // TODO fix this system out
                 System.out.println("An error occurred OIOIOIOI.");
                 e.printStackTrace();
             }
         }
 		public void seekInfile(int leng,String s)
 		{
-			try (RandomAccessFile file = new RandomAccessFile("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+this.filename, "rw")) {
+			try (RandomAccessFile file = new RandomAccessFile("C:\\Users\\Damianos\\Desktop\\"+this.filename, "rw")) {
 				// Move the pointer to the desired position (e.g., byte offset 5)
 				file.seek(file.length()-leng);
 				// Write new content at the specified position
@@ -231,7 +221,7 @@ grammar grammar_v3_2;
 				if(objectPointsClassNameMap.get(key).contains(paraitem)){
 					try {
 						// Read the content of the file
-						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c"));
+						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\Damianos\\Desktop\\"+"testC.c"));
 						StringBuilder content = new StringBuilder();
 						String line;
 						int currentLineNumber = 1;
@@ -243,6 +233,7 @@ grammar grammar_v3_2;
 										line = reader.readLine();
 									}
 									 // Modify the line with the replacement text
+									System.out.println(line.split("int")[1]);
 									line = key+line.split("int")[1];
 								}
 							}
@@ -251,9 +242,10 @@ grammar grammar_v3_2;
 						}
 						reader.close();
 						// Write the modified content back to the file
-						BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c"));
+						BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\Damianos\\Desktop\\"+"testC.c"));
 						writer.write(content.toString());
 						writer.close();
+						System.out.println("File modified successfully.");
 					} catch (IOException e) {
 						e.printStackTrace();
 					}					
@@ -269,7 +261,7 @@ prog
 ;
 classes
     : {
-        pyFile = new File("test_input.py");
+        pyFile = new File("input.py");
         try{
             myReader = new Scanner(pyFile);
         }catch (IOException e) {
@@ -331,7 +323,7 @@ main:
         TmpRw.openFile("temp.c",false);      
         RW.writeFile("int main(){\n");
 		RW.closeFile();
-		File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c");
+		File temp = new File("C:\\Users\\Damianos\\Desktop\\"+"testC.c");
 		try{
 			Scanner myReader = new Scanner(temp);
 			Boolean structFlag = false;
@@ -392,6 +384,7 @@ initFunction
 			tempList.add(fun.getFormalParList().get(i).getName());
 			classesFieldsMap.put(tempNameClass,tempList);
 			if(i>0 && klironomikotita == true){
+				System.out.println((classesFieldsMap.get(klironomikotitaName)));
 				if (!((classesFieldsMap.get(klironomikotitaName)).contains(fun.getFormalParList().get(i).getName()))){
 					RW.writeFile("\t".repeat(tabCounter)+"int "+fun.getFormalParList().get(i).getName()+";\n");
 				}
