@@ -24,7 +24,6 @@ int Person_millenium(Person *self) {
     }
     return 0;
 }
-printf();
 typedef struct {
     Person base;
     int afm;
@@ -36,7 +35,7 @@ void Employee_init(Employee *self, int pid, int born, int afm, int department) {
     self->afm = afm;
     self->department = department;
 }
- 
+
 int Employee_getDepartment(Employee *self) {
     return self->department;
 }

@@ -10,10 +10,8 @@ class Person:
 		if self.born < 2000:
 			return 1
 		else:
-			return 0
-	def getMille(self):
-		millenium(3)
-
+			return 2
+	
 class Employee(Person):
 	def __init__(self, pid, born, afm, department):
 		self.pid = pid
@@ -33,7 +31,7 @@ class StupidPrint:
 		print(employee.born)
 		print(employee.afm)
 		print(employee.department)
- 
+
 if __name__ == '__main__':
 	george = Person(200223, 2002)
 	john = Person(200055, 2000)
