@@ -11,6 +11,17 @@ In v3_x we are working on the output file in c
 
 // changes line 234
 
+/* 
+TODO in gen c file:
+    add return 0 at main end
+    fix if else at def millenium
+    add (Person *) at printf at main
+*/ 
+
+/* TODO getPid in StupidPrint about class Employee,
+that employee pid must be in self->etc */
+
+
 grammar grammar_v3_2;
 
 @header{
@@ -30,14 +41,14 @@ grammar grammar_v3_2;
     addEntity entity;
     WriteToFile RW;
     WriteToFile TmpRw;
-    String tempNameClass,line,tempAssignment,klironomikotitaName,id,checkIdForParmObj;
-    Boolean wrInFinallCfile,klironomikotita=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false;
+    String tempNameClass,line,tempAssignment,inheritanceName,id,checkIdForParmObj;
+    Boolean wrInFinalCFile,inheritance=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false;
     // Raise assignFlag in assignmentStat before callStat|expression and lower it after them
     int returnFlag,tabCounter = 0,counterFileds=2,lineCounter = 1,lineNumberOfstrucktParam=1;
     File pyFile;
     Scanner myReader;
 	ArrayList<String> tempList;
-	HashMap<String, ArrayList<Integer>> lineOfClassStruct = new HashMap<String, ArrayList<Integer>>();
+	HashMap<String, ArrayList<Integer>> lineOfClassStructMap = new HashMap<String, ArrayList<Integer>>();
 	HashMap<String, ArrayList<String>> classesFieldsMap = new HashMap<String, ArrayList<String>>();
 	HashMap<String, ArrayList<String>> objectPointsClassNameMap = new HashMap<String, ArrayList<String>>();
     public class Scope{
@@ -142,6 +153,7 @@ grammar grammar_v3_2;
             }
         }
     }
+    
     public class WriteToFile {
         private FileWriter myWriter;
 		private String filename;
@@ -204,6 +216,7 @@ grammar grammar_v3_2;
             }
         }
     }
+
     public int ReturnTotalNumberOftabs(String line){
         int total = 0;
         if (!(line.startsWith("class"))){
@@ -225,6 +238,7 @@ grammar grammar_v3_2;
         }
         return total;
     }
+
 	public void objectParam(String paraitem){
 		if(!(paraitem.matches("-?\\d+(\\.\\d+)?"))){
 			for (String key : objectPointsClassNameMap.keySet()) {
@@ -236,8 +250,8 @@ grammar grammar_v3_2;
 						String line;
 						int currentLineNumber = 1;
 						while ((line = reader.readLine()) != null) {
-							if (lineOfClassStruct != null && checkIdForParmObj != null){
-								if (currentLineNumber == lineOfClassStruct.get(checkIdForParmObj).get(0) && lineNumberOfstrucktParam>0){
+							if (lineOfClassStructMap != null && checkIdForParmObj != null){
+								if (currentLineNumber == lineOfClassStructMap.get(checkIdForParmObj).get(0) && lineNumberOfstrucktParam>0){
 									for(int i=0;i<lineNumberOfstrucktParam;i++){
 										content.append(line).append(System.lineSeparator());
 										line = reader.readLine();
@@ -310,16 +324,16 @@ class
             System.exit(0);
         }
         tempNameClass = $ID.text;
-    } '('ID { klironomikotitaName = $ID.text;}')' ':'
+    } '('ID { inheritanceName = $ID.text;}')' ':'
     {  
-		klironomikotita = true;
+		inheritance = true;
         AddScope scope = new AddScope();
         scope.add_new_scope();
         RW.writeFile("\ntypedef struct{ \n");
     }
     initFunction  functions
     {
-		klironomikotita = false;
+		inheritance = false;
         scope.remove_scope();
     }
 ;
@@ -328,7 +342,9 @@ main:
     {
         tabCounter+=1;
         returnFlag = -1;
-        TmpRw.openFile("temp.c",false);      
+        TmpRw.openFile("temp.c",false);
+
+        // Begin generating main in c      
         RW.writeFile("int main(){\n");
 		RW.closeFile();
 		File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c");
@@ -336,6 +352,18 @@ main:
 			Scanner myReader = new Scanner(temp);
 			Boolean structFlag = false;
 			int tempCountLine = 0;
+            
+            /*
+            Read the temp file that contains the c generated code
+            and store the the lineOfClassStructMap hashmap the lines of code that
+            the structs begin and end
+            This will be used in going back from main to add the correct type of parameter to the functions
+            eg in main: StupidPrint_init(&stupid, &peter); this requires to go back in the struct of stupidPrint
+            and change the int employee to Employee *employee;
+            The employee has be initialized as int because in c we know the type of the variable only at main
+            when the class is initialized. Python doesn't have initialization to know the type from the beginning
+            */
+
 			while (myReader.hasNextLine()) {
 				String line = myReader.nextLine();
 				if( line.contains("typedef")){
@@ -346,18 +374,21 @@ main:
 					ArrayList<Integer> templ = new ArrayList<Integer>();
 					templ.add(tempCountLine);
 					templ.add(lineCounter);
-					lineOfClassStruct.put((line.split("}")[1].trim()).split(";")[0],templ);
+					lineOfClassStructMap.put((line.split("}")[1].trim()).split(";")[0],templ);
 					structFlag = false;
 				}
 				lineCounter+=1;
 			}
+            
 			myReader.close();
 			RW.openFile("testC.c",true);
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
     }
+
     statements
+    
     {
         TmpRw.closeFile();
         // Reset the return flag for the next function
@@ -385,32 +416,37 @@ initFunction
         scope.add_new_scope();
         ArrayList <Entity> entities_list = scopes_list.get(scopes_list.size()-2).getEntitiesList();
         Function fun = (Function) entities_list.get(entities_list.size()-1);
-        //we use this to fill the struct
-		if(klironomikotita == true)RW.writeFile("\t".repeat(tabCounter)+klironomikotitaName+" base;\n");
+        
+        // Fill the struct
+        // If the class inherents, write base to struct to reflect the inheritance in c file
+		if(inheritance == true)RW.writeFile("\t".repeat(tabCounter)+inheritanceName+" base;\n");
 		tempList = new ArrayList<String>();
+
         for(int i=0;i<fun.getFormalParList().size();i++){
 			tempList.add(fun.getFormalParList().get(i).getName());
 			classesFieldsMap.put(tempNameClass,tempList);
-			if(i>0 && klironomikotita == true){
-				if (!((classesFieldsMap.get(klironomikotitaName)).contains(fun.getFormalParList().get(i).getName()))){
+			if(i>0 && inheritance == true){
+				if (!((classesFieldsMap.get(inheritanceName)).contains(fun.getFormalParList().get(i).getName()))){
 					RW.writeFile("\t".repeat(tabCounter)+"int "+fun.getFormalParList().get(i).getName()+";\n");
 				}
 			}
-            else if(i>0 && klironomikotita == false) RW.writeFile("\t".repeat(tabCounter)+"int "+fun.getFormalParList().get(i).getName()+";\n");
+            else if(i>0 && inheritance == false) RW.writeFile("\t".repeat(tabCounter)+"int "+fun.getFormalParList().get(i).getName()+";\n");
         }
+
         RW.writeFile("}"+tempNameClass+";\n");
-        //for the parameters
+
+        // for the parameters of the function
         for(int i=0;i<fun.getFormalParList().size();i++){
             if(i==0)RW.writeFile("void "+tempNameClass+"_init ("+tempNameClass+" *"+fun.getFormalParList().get(i).getName());
             else if(i>0)RW.writeFile(",int "+fun.getFormalParList().get(i).getName());
         }
-        RW.writeFile(") {\n");
-        wrInFinallCfile = true;
+        RW.writeFile(") {=\n");
+        wrInFinalCFile = true;
 		counterFileds =2;
     }
     (statements | 'pass')
     {
-        wrInFinallCfile = false;
+        wrInFinalCFile = false;
         RW.writeFile("\n}\n");
         scope.remove_scope();
         tabCounter -=1;
@@ -439,7 +475,7 @@ function
         scope.add_new_scope();
         ArrayList <Entity> entities_list = scopes_list.get(scopes_list.size()-2).getEntitiesList();
         Function fun = (Function) entities_list.get(entities_list.size()-1);
-        //grafoume se tmp arxeio epidi theloyme na doume ti topos einai h sinartisi
+        // Write in temp file to check what's the functions type
         TmpRw = new WriteToFile();
         TmpRw.openFile("temp.c",false);      
         for(int i=0;i<fun.getFormalParList().size();i++)
@@ -545,12 +581,11 @@ when it has to throw an error
 */
 actualparlist
     :actualparitem
+    
     {
-		//if(!($actualparitem.text.isEmpty()) && assignFlag == true) auto den leitourgei stin periptosh tou komatos stin Employee_setDepartment(&peter,2)
-		// alla stin katw sinthiki an kalesoume mi sinartisi apeythias mporei na valei koma ekei poy den theloume
         if(!($actualparitem.text.isEmpty())){
 			objectParam($actualparitem.text);
-            if(wrInFinallCfile==true){
+            if(wrInFinalCFile==true){
 				RW.closeFile();
 				RW.seekInfile($actualparitem.text.length()+1,",");
 				RW.openFile("testC.c",true);
@@ -562,23 +597,29 @@ actualparlist
 			}
         }
     }
+    
     (','
+    
     {
-        if(wrInFinallCfile == true)RW.writeFile(",");
+        if(wrInFinalCFile == true)RW.writeFile(",");
         else TmpRw.writeFile(",");
     }
-    actualparitem {objectParam($actualparitem.text);})*
+    
+    actualparitem {objectParam($actualparitem.text);}
+    )*
     |
 ;
+
 actualparitem
     :expression
     |obj
     |ID
     {
-        if(wrInFinallCfile == true)RW.writeFile($ID.text);
+        if(wrInFinalCFile == true)RW.writeFile($ID.text);
         else TmpRw.writeFile($ID.text);
     }
 ;
+
 assignmentStat
     :(
         (
@@ -595,13 +636,17 @@ assignmentStat
                     In callStat, write the two lines in C format, for the declaration and the
                     initialization
                 */
-                 tempAssignment =("\t".repeat(tabCounter)+$ID.text+" = ");
+                 
+                tempAssignment =("\t".repeat(tabCounter)+$ID.text+" = ");
             }
         )
-        |obj{
-			if(klironomikotita == true){
-				if(counterFileds-1 > classesFieldsMap.get(klironomikotitaName).size()){
-					if (wrInFinallCfile == true)RW.writeFile(" = ");
+        
+        |obj
+        
+        {
+			if(inheritance == true){
+				if(counterFileds-1 > classesFieldsMap.get(inheritanceName).size()){
+					if (wrInFinalCFile == true)RW.writeFile(" = ");
 					// Also store the equal sign. Will remove it later if in callStat
 					else TmpRw.writeFile(" = ");
 				}
@@ -609,24 +654,32 @@ assignmentStat
             }
 			else
 			{
-				if (wrInFinallCfile == true)RW.writeFile(" = ");
+				if (wrInFinalCFile == true)RW.writeFile(" = ");
 				// Also store the equal sign. Will remove it later if in callStat
 				else TmpRw.writeFile(" = ");
 			}
 		}
     )
+
     // expression or callStat for e.g.  george = Person(200223, 2002)
-    '=' {assignFlag = true;}(callStat | expression){dontWriteInheritanceData = false;assignFlag = false;}
+    '=' 
+
+    {assignFlag = true;}
+
+    (callStat | expression)
+
+    {dontWriteInheritanceData = false;assignFlag = false;}
+    
     {
-		if(klironomikotita == true){
-			if(counterFileds-1 > classesFieldsMap.get(klironomikotitaName).size()){
-				if (wrInFinallCfile == true) RW.writeFile(";\n");
+		if(inheritance == true){
+			if(counterFileds-1 > classesFieldsMap.get(inheritanceName).size()){
+				if (wrInFinalCFile == true) RW.writeFile(";\n");
 				else TmpRw.writeFile(";\n");
 			}
 		}
 		else
 		{
-			if (wrInFinallCfile == true) RW.writeFile(";\n");
+			if (wrInFinalCFile == true) RW.writeFile(";\n");
 			else TmpRw.writeFile(";\n");
 		}
     }
@@ -645,7 +698,7 @@ ifStat
             }
             // Need to set elseFlag false for each if
             elseFlag = false;
-            if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
+            if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
             else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
 			rmTabsCallstat = true;
         }
@@ -653,13 +706,13 @@ ifStat
     {
 		rmTabsCallstat = false;
         tabCounter +=1;
-        if(wrInFinallCfile==true)RW.writeFile("){\n");
+        if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
         statements
     {
         tabCounter -=1;
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     elsepart
@@ -673,7 +726,7 @@ ifStat
             System.exit(0);
         }
         elseFlag = false;
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
 		rmTabsCallstat = true;
     }
@@ -681,13 +734,13 @@ ifStat
     {
 		rmTabsCallstat = false;
         tabCounter +=1;
-        if(wrInFinallCfile==true)RW.writeFile("){\n");
+        if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
     statements
     {
         tabCounter -=1;
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     elsepart
@@ -702,7 +755,7 @@ elsepart
             System.out.println("Check your tabs near line: "+line);
             System.exit(0);
         }
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"else {\n");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"else {\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"else {\n");
         // Need this flag here to add return 0 at C when else doesn't exist
         elseFlag = true;
@@ -711,7 +764,7 @@ elsepart
     statements
     {
         tabCounter-=1;
-        if(wrInFinallCfile==true)RW.writeFile("}\n");
+        if(wrInFinalCFile==true)RW.writeFile("}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     |
@@ -719,7 +772,7 @@ elsepart
 whileStat
     :'while'
     {
-            if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"while (");
+            if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"while (");
             else TmpRw.writeFile("\t".repeat(tabCounter)+"while (");
 			rmTabsCallstat = true;
     }
@@ -727,18 +780,18 @@ whileStat
     {
 		rmTabsCallstat = false;
         tabCounter +=1;
-        if(wrInFinallCfile==true)RW.writeFile("){\n");
+        if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
     statements
     {
         tabCounter -=1;
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     |'while'
     {
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"while (");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"while (");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"while (");
 		rmTabsCallstat = true;
     }
@@ -746,34 +799,34 @@ whileStat
     {
 		rmTabsCallstat = false;
         tabCounter +=1;
-        if(wrInFinallCfile==true)RW.writeFile("){\n");
+        if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
     statements
     {
         tabCounter -=1;
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
 ;
 printStat
     :'print'
     {
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"printf (");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"printf (");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"printf (");
 		rmTabsCallstat = true;
     }
     '(' expression')'
     {
 		rmTabsCallstat = false;
-        if(wrInFinallCfile==true)RW.writeFile(");\n");
+        if(wrInFinalCFile==true)RW.writeFile(");\n");
         else TmpRw.writeFile(");\n");
     }
 ;
 returnStat
     : 'return '
         {
-            if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"return ");
+            if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"return ");
             else {
                 TmpRw.writeFile("\t".repeat(tabCounter)+"return ");
             }
@@ -782,18 +835,18 @@ returnStat
         expression
         {
 			rmTabsCallstat = false;
-            if(wrInFinallCfile==true)RW.writeFile(";\n");
+            if(wrInFinalCFile==true)RW.writeFile(";\n");
             else TmpRw.writeFile(";\n");
             returnFlag = 1;
         }
     |'return ''('
     {
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"return (");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"return (");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"return (");
     }
     expression ')'
         {
-            if(wrInFinallCfile==true)RW.writeFile(");\n");
+            if(wrInFinalCFile==true)RW.writeFile(");\n");
             else TmpRw.writeFile(");\n");
             returnFlag = 1;
         }
@@ -805,17 +858,19 @@ callStat
 		checkIdForParmObj = $ID.text;
 		if(dontWriteInheritanceData ==false ){
 			if(assignFlag == true){
-				/*
+				
+                /*
 					Only keep the tabs and the name of the ID, without the "="
 					Write in file: Person george
 					The declaration of the object george of type Person
 				*/
+
 				String[]temp = tempAssignment.split(" =");
 				if(!(objectPointsClassNameMap.containsKey($ID.text))){
 					objectPointsClassNameMap.put($ID.text,new ArrayList<>());
 				}
 				objectPointsClassNameMap.get($ID.text).add(temp[0].trim());
-				if(wrInFinallCfile==true){
+				if(wrInFinalCFile==true){
 					RW.writeFile("\t".repeat(tabCounter)+$ID.text+temp[0]+";\n");
 					RW.writeFile("\t".repeat(tabCounter)+$ID.text+"_init");
 				}
@@ -825,7 +880,7 @@ callStat
 					}
 			}
 			else{
-				if(wrInFinallCfile==true){
+				if(wrInFinalCFile==true){
 					if(rmTabsCallstat == true)RW.writeFile($ID.text);
 					else RW.writeFile("\t".repeat(tabCounter)+$ID.text);
 				}
@@ -836,6 +891,7 @@ callStat
 			}
 		}
     })
+
     /*
         Problem: Need to write the parameter e.g. &george before all other parameters
         Easy to write it by hand, but hard to add the comment
@@ -846,14 +902,16 @@ callStat
         won't do it.
         Solution: TODO fix the comma
     */
+  
     '('
+    
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile == true)RW.writeFile("(");
+			if(wrInFinalCFile == true)RW.writeFile("(");
 			else TmpRw.writeFile("(");
 			if(assignFlag == true){
 				String[]temp = tempAssignment.split(" =");
-				if(wrInFinallCfile==true){
+				if(wrInFinalCFile==true){
 					//to keno meta to trim to exoume gia na min mas trwei ton xaraktira to seek pou kaname gia thn topothetisi tou komatos 
 					RW.writeFile("&"+temp[0].trim()+" ");
 				}
@@ -862,7 +920,7 @@ callStat
 					}
 			}
 			else{
-				if(wrInFinallCfile==true){
+				if(wrInFinalCFile==true){
 					RW.writeFile("&"+id+" ");
 				}
 				else {
@@ -871,13 +929,15 @@ callStat
 			}
 		}
     }
-    actualparlist')'
+
+    actualparlist ')'
+    
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile == true){
+			if(wrInFinalCFile == true){
 				RW.writeFile(")");
 				if (assignFlag == false){
-					if(wrInFinallCfile == true)RW.writeFile(";");
+					if(wrInFinalCFile == true)RW.writeFile(";");
 					else TmpRw.writeFile(";");
 					assignFlag = false;
 				}
@@ -893,69 +953,86 @@ condition
     :boolterm
     ('or'
     {
-        if(wrInFinallCfile==true)RW.writeFile(" or ");
+        if(wrInFinalCFile==true)RW.writeFile(" or ");
         else TmpRw.writeFile(" or ");
-    }
+    } 
     boolterm)*
 ;
+
 boolterm
     :boolfactor
     ('and'
     {
-        if(wrInFinallCfile==true)RW.writeFile(" and ");
+        if(wrInFinalCFile==true)RW.writeFile(" and ");
         else TmpRw.writeFile(" and ");
     }
     boolfactor)*
 ;
+
 // Parentheses are mandatory here because of left-recursiveness error
 boolfactor
     : 'not' '('
+
     {
-        if(wrInFinallCfile==true)RW.writeFile(" not (");
+        if(wrInFinalCFile==true)RW.writeFile(" not (");
         else TmpRw.writeFile(" not (");
     }
+   
     condition ')'
+  
     {
-        if(wrInFinallCfile==true)RW.writeFile(")");
+        if(wrInFinalCFile==true)RW.writeFile(")");
         else TmpRw.writeFile(")");        
     }
+   
     | '('
+   
     {
-        if(wrInFinallCfile==true)RW.writeFile("(");
+        if(wrInFinalCFile==true)RW.writeFile("(");
         else TmpRw.writeFile("(");        
+  
     }
+  
     condition ')'
+   
     {
-        if(wrInFinallCfile==true)RW.writeFile(")");
+        if(wrInFinalCFile==true)RW.writeFile(")");
         else TmpRw.writeFile(")");        
     }
+   
     | expression REL_OP
+   
     {
-        if(wrInFinallCfile==true)RW.writeFile($REL_OP.text);
+        if(wrInFinalCFile==true)RW.writeFile($REL_OP.text);
         else TmpRw.writeFile($REL_OP.text);        
     }
+   
     expression
 ;
+
 obj
     :ID
+   
         {
 			id = $ID.text;
         }
+   
     '.'ID  
-		{
+		
+        {
 			if(dontWriteInheritanceData == false){
-				if(wrInFinallCfile == true){
-					if(klironomikotita == false){
+				if(wrInFinalCFile == true){
+					if(inheritance == false){
 						if (rmTabsCallstat == true)RW.writeFile(id+"->");
 						else RW.writeFile("\t".repeat(tabCounter)+id+"->");
 						RW.writeFile($ID.text);
 					}
 					else {
-						if ((classesFieldsMap.get(klironomikotitaName)).contains($ID.text)){
-							if((classesFieldsMap.get(klironomikotitaName)).size() == counterFileds){
-								RW.writeFile(klironomikotitaName+"_init(("+klironomikotitaName+"*)");
+						if ((classesFieldsMap.get(inheritanceName)).contains($ID.text)){
+							if((classesFieldsMap.get(inheritanceName)).size() == counterFileds){
+								RW.writeFile(inheritanceName+"_init(("+inheritanceName+"*)");
 								ArrayList<String> values = new ArrayList<String>();
-								for (String value : classesFieldsMap.get(klironomikotitaName)){
+								for (String value : classesFieldsMap.get(inheritanceName)){
 									values.add(value);
 								}
 								RW.writeFile(String.join(", ", values)+");\n");
@@ -975,11 +1052,13 @@ obj
 				}
 			}
         }
-	|ID
+	
+    |ID
+
         {
 			if(dontWriteInheritanceData == false){
 				id = $ID.text;
-				if(wrInFinallCfile == true){
+				if(wrInFinalCFile == true){
 					for (String key : objectPointsClassNameMap.keySet()) {
 						if(objectPointsClassNameMap.get(key).contains($ID.text)){
 							if(rmTabsCallstat==false)RW.writeFile("\t".repeat(tabCounter)+key+"_");
@@ -997,13 +1076,19 @@ obj
 				}
 			}
         }
-	'.'{rmTabsCallstat = true;}callStat{rmTabsCallstat = false;}
+
+	'.'
+
+    {rmTabsCallstat = true;}
+    callStat
+    {rmTabsCallstat = false;}
 ;
+
 expression
     :optionalSign
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile==true)RW.writeFile($optionalSign.text);
+			if(wrInFinalCFile==true)RW.writeFile($optionalSign.text);
 			else TmpRw.writeFile($optionalSign.text);
 		}
     }
@@ -1011,7 +1096,7 @@ expression
     (ADD_OP
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile==true)RW.writeFile($ADD_OP.text);
+			if(wrInFinalCFile==true)RW.writeFile($ADD_OP.text);
 			else TmpRw.writeFile($ADD_OP.text); 
 		}
     }
@@ -1021,7 +1106,7 @@ term
     :factor (MUL_OP
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile==true)RW.writeFile($MUL_OP.text);
+			if(wrInFinalCFile==true)RW.writeFile($MUL_OP.text);
 			else TmpRw.writeFile($MUL_OP.text);
 		}
     }
@@ -1031,14 +1116,14 @@ factor
     :INT
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile==true)RW.writeFile($INT.text);
+			if(wrInFinalCFile==true)RW.writeFile($INT.text);
 			else TmpRw.writeFile($INT.text);
 			}
     }
     |ID
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile==true)RW.writeFile($ID.text);
+			if(wrInFinalCFile==true)RW.writeFile($ID.text);
 			else TmpRw.writeFile($ID.text);
 			}
     }
