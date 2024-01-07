@@ -22,7 +22,7 @@ grammar ExprParser;
     WriteToFile RW;
     WriteToFile TmpRw;
     String tempNameClass,line,tempAssignment,klironomikotitaName,id,checkIdForParmObj;
-    Boolean wrInFinallCfile,klironomikotita=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false;
+    Boolean wrInFinallCfile,klironomikotita=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false,callStatFlag=false;
     // Raise assignFlag in assignmentStat before callStat|expression and lower it after them
     int returnFlag,tabCounter = 0,counterFileds=2,lineCounter = 1,lineNumberOfstrucktParam=1;
     File pyFile;
@@ -216,7 +216,9 @@ grammar ExprParser;
         return total;
     }
 	public void objectParam(String paraitem){
+		// check if the parameter is not a number
 		if(!(paraitem.matches("-?\\d+(\\.\\d+)?"))){
+			//take all class names from hashmap to return their obj to check if parameter is an object or not 
 			for (String key : objectPointsClassNameMap.keySet()) {
 				if(objectPointsClassNameMap.get(key).contains(paraitem)){
 					try {
@@ -225,19 +227,41 @@ grammar ExprParser;
 						StringBuilder content = new StringBuilder();
 						String line;
 						int currentLineNumber = 1;
+						Boolean endStruc = false;
 						while ((line = reader.readLine()) != null) {
 							if (lineOfClassStruct != null && checkIdForParmObj != null){
+							// we use this condition to check if we are in the proper struct 
 								if (currentLineNumber == lineOfClassStruct.get(checkIdForParmObj).get(0) && lineNumberOfstrucktParam>0){
+									//we use this loop to find and put the proper declaration into our variable 
+									//actually with this loop we move our pointer into the proper line which is the lineNumberOfstrucktParam
+									//which we have taken from main were the function was called 
 									for(int i=0;i<lineNumberOfstrucktParam;i++){
-										content.append(line).append(System.lineSeparator());
-										line = reader.readLine();
+										content.append(line).append(System.lineSeparator());//we append every line we dont need to change in the file 
+										line = reader.readLine();// we hold the last line which we need to change
 									}
 									 // Modify the line with the replacement text
-									System.out.println(line.split("int")[1]);
-									line = key+line.split("int")[1];
+									line = "\t"+key+" *"+line.split("int")[1].trim();
+									endStruc = true;
+								}
+								//we made this condition to place the proper object in parameters 
+								else if(line.contains(checkIdForParmObj+"_init") && endStruc == true){
+									String[] templine = line.split(",");
+									String str = templine[lineNumberOfstrucktParam].split("int")[1].trim();
+									str = str.replace(") {","");
+									templine[lineNumberOfstrucktParam]=key+" *"+templine[lineNumberOfstrucktParam].split("int")[1].trim();
+									String templ="",str2 = "";
+									for(int i=0;i<templine.length;i++){
+										templ += templine[i];
+										if(i<templine.length-1)templ +=", ";
+										else if(i>0){
+											str2+="\n\t"+"self-> "+str+" = "+str+";";//we made this becuase we want to declare the obj in the function
+										}
+									}
+									endStruc = false;
+									line = templ+str2;		
 								}
 							}
-							content.append(line).append(System.lineSeparator());
+							content.append(line).append(System.lineSeparator());//we append every line in the file
 							currentLineNumber++;
 						}
 						reader.close();
@@ -498,7 +522,7 @@ statement
             System.exit(0);
         }
     }
-    |callStat
+    |{callStatFlag = true;}callStat
     {
         line = myReader.nextLine();
         int temp = ReturnTotalNumberOftabs(line) ;
@@ -545,12 +569,12 @@ actualparlist
 			objectParam($actualparitem.text);
             if(wrInFinallCfile==true){
 				RW.closeFile();
-				RW.seekInfile($actualparitem.text.length()+1,",");
+				RW.seekInfile($actualparitem.text.length()+2,",");
 				RW.openFile("testC.c",true);
 			}
             else{
 				TmpRw.closeFile();
-				TmpRw.seekInfile($actualparitem.text.length()+1,",");
+				TmpRw.seekInfile($actualparitem.text.length()+2,",");
 				TmpRw.openFile("temp.c",true);
 			}
         }
@@ -568,8 +592,8 @@ actualparitem
     |obj
     |ID
     {
-        if(wrInFinallCfile == true)RW.writeFile($ID.text);
-        else TmpRw.writeFile($ID.text);
+        if(wrInFinallCfile == true)RW.writeFile($ID.text+" ");
+        else TmpRw.writeFile($ID.text+" ");
     }
 ;
 assignmentStat
@@ -848,18 +872,18 @@ callStat
 				String[]temp = tempAssignment.split(" =");
 				if(wrInFinallCfile==true){
 					//to keno meta to trim to exoume gia na min mas trwei ton xaraktira to seek pou kaname gia thn topothetisi tou komatos 
-					RW.writeFile("&"+temp[0].trim()+" ");
+					RW.writeFile("&"+temp[0].trim()+"  ");
 				}
 				else {
-					TmpRw.writeFile("&"+temp[0].trim()+" ");
+					TmpRw.writeFile("&"+temp[0].trim()+"  ");
 					}
 			}
 			else{
 				if(wrInFinallCfile==true){
-					RW.writeFile("&"+id+" ");
+					RW.writeFile("&"+id+"  ");
 				}
 				else {
-					TmpRw.writeFile("&"+id+" ");
+					TmpRw.writeFile("&"+id+"  ");
 					}
 			}
 		}
@@ -875,9 +899,11 @@ callStat
 					assignFlag = false;
 				}
 			}
-			else {
-				TmpRw.writeFile(")");			
+			else if(wrInFinallCfile == false && callStatFlag==true ) {
+				TmpRw.writeFile(");\n");
+				callStatFlag = false;
 			}
+			else TmpRw.writeFile(")");		
 		}
 		lineNumberOfstrucktParam = 1;
     }
@@ -1031,9 +1057,28 @@ factor
     |ID
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile==true)RW.writeFile($ID.text);
-			else TmpRw.writeFile($ID.text);
+			Boolean flag = false;
+			if(wrInFinallCfile==true){
+				for(String key:objectPointsClassNameMap.keySet()){
+					if(objectPointsClassNameMap.get(key).contains($ID.text)){
+						flag =true;
+						break;
+					}
+				}
+				if(flag == true)RW.writeFile(" &"+$ID.text);
+				else RW.writeFile($ID.text);
 			}
+			else {
+				for(String key:objectPointsClassNameMap.keySet()){
+					if(objectPointsClassNameMap.get(key).contains($ID.text)){
+						flag =true;
+						break;
+					}
+				}
+				if(flag == true)TmpRw.writeFile(" &"+$ID.text);
+				else TmpRw.writeFile($ID.text);
+			}
+		}
     }
     // @TODO ID idtail
     |obj
