@@ -21,13 +21,14 @@ grammar ExprParser;
     addEntity entity;
     WriteToFile RW;
     WriteToFile TmpRw;
-    String tempNameClass,line,tempAssignment,klironomikotitaName,id,checkIdForParmObj;
+    String tempNameClass,line,tempAssignment,klironomikotitaName,id,checkIdForParmObj,ClassNameForDowncasting;
     Boolean wrInFinallCfile,klironomikotita=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false,callStatFlag=false;
     // Raise assignFlag in assignmentStat before callStat|expression and lower it after them
     int returnFlag,tabCounter = 0,counterFileds=2,lineCounter = 1,lineNumberOfstrucktParam=1;
     File pyFile;
     Scanner myReader;
-	ArrayList<String> tempList;
+	ArrayList<String> tempList,tempFuncName;
+	HashMap<String, ArrayList<String>>  classesAndFunctions= new HashMap<String, ArrayList<String>>();
 	HashMap<String, ArrayList<Integer>> lineOfClassStruct = new HashMap<String, ArrayList<Integer>>();
 	HashMap<String, ArrayList<String>> classesFieldsMap = new HashMap<String, ArrayList<String>>();
 	HashMap<String, ArrayList<String>> objectPointsClassNameMap = new HashMap<String, ArrayList<String>>();
@@ -228,9 +229,11 @@ grammar ExprParser;
 						String line;
 						int currentLineNumber = 1;
 						Boolean endStruc = false;
-						while ((line = reader.readLine()) != null) {
-							if (lineOfClassStruct != null && checkIdForParmObj != null){
-							// we use this condition to check if we are in the proper struct 
+						while ((line = reader.readLine()) != null) 
+						{
+							if (lineOfClassStruct != null && checkIdForParmObj != null)
+							{
+								// we use this condition to check if we are in the proper struct 
 								if (currentLineNumber == lineOfClassStruct.get(checkIdForParmObj).get(0) && lineNumberOfstrucktParam>0){
 									//we use this loop to find and put the proper declaration into our variable 
 									//actually with this loop we move our pointer into the proper line which is the lineNumberOfstrucktParam
@@ -434,12 +437,14 @@ initFunction
     }
 ;
 functions
-    :function ( function)*
+    :{tempFuncName = new ArrayList<String>();}function ( function)*
     |
 ;
 function
     :'def' ID
     {
+		tempFuncName.add($ID.text);
+		classesAndFunctions.put(tempNameClass,tempFuncName);
         tabCounter +=1;
         line = myReader.nextLine();
         int temp = ReturnTotalNumberOftabs(line) ;
@@ -842,13 +847,19 @@ callStat
 					}
 			}
 			else{
-				if(wrInFinallCfile==true){
-					if(rmTabsCallstat == true)RW.writeFile($ID.text);
-					else RW.writeFile("\t".repeat(tabCounter)+$ID.text);
-				}
-				else {
-					if(rmTabsCallstat == true)TmpRw.writeFile($ID.text);
-					else TmpRw.writeFile("\t".repeat(tabCounter)+$ID.text);
+				for(String key: classesAndFunctions.keySet()){
+					if(classesAndFunctions.get(key).contains($ID.text)){
+						ClassNameForDowncasting = key;
+						if(wrInFinallCfile==true){
+							if(rmTabsCallstat == true)RW.writeFile(key+"_"+$ID.text);
+							else RW.writeFile("\t".repeat(tabCounter)+key+"_"+$ID.text);
+						}
+						else {
+							if(rmTabsCallstat == true)TmpRw.writeFile(key+"_"+$ID.text);
+							else TmpRw.writeFile("\t".repeat(tabCounter)+key+"_"+$ID.text);
+						}
+						break;
+					}
 				}
 			}
 		}
@@ -879,12 +890,26 @@ callStat
 					}
 			}
 			else{
-				if(wrInFinallCfile==true){
-					RW.writeFile("&"+id+"  ");
-				}
-				else {
-					TmpRw.writeFile("&"+id+"  ");
+				for(String key:objectPointsClassNameMap.keySet()){
+					if(objectPointsClassNameMap.get(key).contains(id)&& !(ClassNameForDowncasting.equals(key))){
+						if(wrInFinallCfile==true){
+							RW.writeFile("("+ClassNameForDowncasting+" *)&"+id+"  ");
+						}
+						else {
+							TmpRw.writeFile("("+ClassNameForDowncasting+" *)&"+id+"  ");
+						}
+						break;
 					}
+					else{
+						if(wrInFinallCfile==true){
+							RW.writeFile("&"+id+"  ");
+						}
+						else {
+							TmpRw.writeFile("&"+id+"  ");
+						}
+						break;
+					}
+				}
 			}
 		}
     }
@@ -998,9 +1023,10 @@ obj
         {
 			if(dontWriteInheritanceData == false){
 				id = $ID.text;
-				if(wrInFinallCfile == true){
+			}	/*if(wrInFinallCfile == true){
 					for (String key : objectPointsClassNameMap.keySet()) {
 						if(objectPointsClassNameMap.get(key).contains($ID.text)){
+							ClassNameForDowncasting = key;
 							if(rmTabsCallstat==false)RW.writeFile("\t".repeat(tabCounter)+key+"_");
 							else RW.writeFile(key+"_");
 						}
@@ -1009,12 +1035,13 @@ obj
 				else {
 					for (String key : objectPointsClassNameMap.keySet()) {
 						if(objectPointsClassNameMap.get(key).contains($ID.text)){
+							ClassNameForDowncasting = key;
 							if(rmTabsCallstat==false)TmpRw.writeFile("\t".repeat(tabCounter)+key+"_");
 							else TmpRw.writeFile(key+"_");
 						}
 					}
 				}
-			}
+			}*/
         }
 	'.'{rmTabsCallstat = true;}callStat{rmTabsCallstat = false;}
 ;
