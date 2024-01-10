@@ -2,21 +2,7 @@
 In v3_x we are working on the output file in c
 */
 // TODO add errors for missing functions/vars
-// TODO formal parameters in functions when they are objects eg.int Person_getPid(Person *self)\
-
-// TODO fix "%d\n", 
-
-/*
-    Today's Work
-    Problem: Function with object from main as parameter
-*/
-
-/*
-In v3_x we are working on the output file in c
-*/
-// TODO add errors for missing functions/vars
 // TODO formal parameters in functions when they are objects eg.int Person_getPid(Person *self)
-
 grammar ExprParser;
 @header{
 	import java.io.BufferedReader;
@@ -230,14 +216,7 @@ grammar ExprParser;
         }
         return total;
     }
-    
-    // Function for fixing the type of parameters at functions (not the init function)
-	public void placeObject(String line,int parameterCounter,String str, Boolean f ){
-		String[] templine = line.split(",");
-		System.out.println(parameterCounter+" "+templine[1]);
-		str = templine[parameterCounter].split("int")[1].trim();
-		str = str.replace(") {","");
-		templine[parameterCounter]=key+" *"+templine[parameterCounter].split("int")[1].trim();
+	public String placeObject(StringBuilder content,BufferedReader reader,String line,int parameterCounter,String key,String str,String[] templine ){
 		String templ="",str2 = "";
 		for(int i=0;i<templine.length;i++){
 			templ += templine[i];
@@ -246,16 +225,18 @@ grammar ExprParser;
 				str2+="\n\t"+"self-> "+str+" = "+str+";";//we made this becuase we want to declare the obj in the function
 			}
 		}
-		f = true; 
 		line = templ+str2;	
 		//we use this condition to make sure the declarationof the objects in the function will not be changed
 		for(int i=0;i<classesFieldsMap.get(checkIdForParmObj).size()-(classesFieldsMap.get(checkIdForParmObj).size()-1);i++){
 			content.append(line).append(System.lineSeparator());//we append every line in the file
-			line = reader.readLine();
+			try{
+				line = reader.readLine();
+			}catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
+		return line;
 	}
-
-    // Function for fixing the type of parameters at init function
 	public void objectParam(String paraitem){
 		// check if the parameter is not a number
 		if(!(paraitem.matches("-?\\d+(\\.\\d+)?"))){
@@ -278,6 +259,7 @@ grammar ExprParser;
 						Set<String> Classeskeys = classesAndFunctions.keySet();
 						List<String> ClasseskeysList = List.copyOf(keys);
 						int step = keyList.size()-1;
+						int paramCounter = 1;//not init
 						while ((line = reader.readLine()) != null) 
 						{
 							if (lineOfClassStruct != null && checkIdForParmObj != null)
@@ -310,12 +292,24 @@ grammar ExprParser;
 								}
 								//we made this condition to place the proper object in parameters 
 								else if(line.contains(checkIdForParmObj+"_init") && endStruc == true){
-										placeObject(line, lineNumberOfstrucktParam, str , f);
+										String[] templine = line.split(",");
+										str = templine[lineNumberOfstrucktParam].split("int")[1].trim();
+										str = str.replace(") {","");
+										templine[lineNumberOfstrucktParam]=key+" *"+templine[lineNumberOfstrucktParam].split("int")[1].trim();
+										line = placeObject(content,reader,line, lineNumberOfstrucktParam,key, str,templine);
 										endStruc = false;
+										f = true; 
 								}
 								else if(line.contains(checkIdForParmObj+"_printNumber")){
-									placeObject(line, lineNumberOfstrucktParam, str , f);
- 
+									String[] templine = line.split(",");
+									if(templine.length > 1 ){
+										str = templine[paramCounter].split("int")[1].trim();
+										str = str.replace(") {","");
+										templine[paramCounter]=key+" *"+templine[paramCounter].split("int")[1].trim();
+										line = placeObject(content,reader,line, paramCounter,key, str,templine);
+									}
+									f = true; 
+									paramCounter++;
 								}
 								if(line.contains("}"))f=false;
 							}
