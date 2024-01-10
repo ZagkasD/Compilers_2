@@ -11,7 +11,13 @@ In v3_x we are working on the output file in c
     Problem: Function with object from main as parameter
 */
 
-grammar grammar_v3_2;
+/*
+In v3_x we are working on the output file in c
+*/
+// TODO add errors for missing functions/vars
+// TODO formal parameters in functions when they are objects eg.int Person_getPid(Person *self)
+
+grammar ExprParser;
 @header{
 	import java.io.BufferedReader;
 	import java.io.BufferedWriter;
@@ -148,7 +154,7 @@ grammar grammar_v3_2;
         public void openFile(String filename,boolean f) {
 			this.filename = filename;
             try {
-              myWriter = new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+filename,f);
+              myWriter = new FileWriter("C:\\Users\\Damianos\\Desktop\\"+filename,f);
             } catch (IOException e) {
               System.out.println("Open file,an error occurred.");
               e.printStackTrace();
@@ -157,7 +163,7 @@ grammar grammar_v3_2;
         public void merge(String filename)
         {
             try {
-                File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+filename);
+                File temp = new File("C:\\Users\\Damianos\\Desktop\\"+filename);
                 if (returnFlag == 1) writeFile("int ");
                 else if(returnFlag !=-1 )writeFile("void ");
                 // Write temp file to original file
@@ -183,7 +189,7 @@ grammar grammar_v3_2;
         }
 		public void seekInfile(int leng,String s)
 		{
-			try (RandomAccessFile file = new RandomAccessFile("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+this.filename, "rw")) {
+			try (RandomAccessFile file = new RandomAccessFile("C:\\Users\\Damianos\\Desktop\\"+this.filename, "rw")) {
 				// Move the pointer to the desired position (e.g., byte offset 5)
 				file.seek(file.length()-leng);
 				// Write new content at the specified position
@@ -224,18 +230,41 @@ grammar grammar_v3_2;
         }
         return total;
     }
+    
+    // Function for fixing the type of parameters at functions (not the init function)
+	public void placeObject(String line,int parameterCounter,String str, Boolean f ){
+		String[] templine = line.split(",");
+		System.out.println(parameterCounter+" "+templine[1]);
+		str = templine[parameterCounter].split("int")[1].trim();
+		str = str.replace(") {","");
+		templine[parameterCounter]=key+" *"+templine[parameterCounter].split("int")[1].trim();
+		String templ="",str2 = "";
+		for(int i=0;i<templine.length;i++){
+			templ += templine[i];
+			if(i<templine.length-1)templ +=", ";
+			else if(i>0){
+				str2+="\n\t"+"self-> "+str+" = "+str+";";//we made this becuase we want to declare the obj in the function
+			}
+		}
+		f = true; 
+		line = templ+str2;	
+		//we use this condition to make sure the declarationof the objects in the function will not be changed
+		for(int i=0;i<classesFieldsMap.get(checkIdForParmObj).size()-(classesFieldsMap.get(checkIdForParmObj).size()-1);i++){
+			content.append(line).append(System.lineSeparator());//we append every line in the file
+			line = reader.readLine();
+		}
+	}
+
+    // Function for fixing the type of parameters at init function
 	public void objectParam(String paraitem){
 		// check if the parameter is not a number
 		if(!(paraitem.matches("-?\\d+(\\.\\d+)?"))){
-			
-            //take all class names from hashmap to return their obj to check if parameter is an object or not 
+			//take all class names from hashmap to return their obj to check if parameter is an object or not 
 			for (String key : objectPointsClassNameMap.keySet()) {
-                
-                // Parameter is field of class
 				if(objectPointsClassNameMap.get(key).contains(paraitem)){
 					try {
 						// Read the content of the file
-						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c"));
+						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\Damianos\\Desktop\\"+"testC.c"));
 						StringBuilder content = new StringBuilder();
 						String line;
 						int currentLineNumber = 1;
@@ -246,8 +275,9 @@ grammar grammar_v3_2;
 						Boolean fl = false,f=false;
 						Set<String> keys = lineOfClassStruct.keySet();
 						List<String> keyList = List.copyOf(keys);
+						Set<String> Classeskeys = classesAndFunctions.keySet();
+						List<String> ClasseskeysList = List.copyOf(keys);
 						int step = keyList.size()-1;
-
 						while ((line = reader.readLine()) != null) 
 						{
 							if (lineOfClassStruct != null && checkIdForParmObj != null)
@@ -266,7 +296,7 @@ grammar grammar_v3_2;
 									fl = true;
 								}
 								// we use this condition to check if we are in the proper struct 
-								if (currentLineNumber == lineOfClassStruct.get(checkIdForParmObj).get(0) && lineNumberOfstrucktParam>0){
+								if (ClasseskeysList.contains(checkIdForParmObj) && currentLineNumber == lineOfClassStruct.get(checkIdForParmObj).get(0) && lineNumberOfstrucktParam>0){
 									//we use this loop to find and put the proper declaration into our variable 
 									//actually with this loop we move our pointer into the proper line which is the lineNumberOfstrucktParam
 									//which we have taken from main were the function was called 
@@ -280,27 +310,12 @@ grammar grammar_v3_2;
 								}
 								//we made this condition to place the proper object in parameters 
 								else if(line.contains(checkIdForParmObj+"_init") && endStruc == true){
-									String[] templine = line.split(",");
-									str = templine[lineNumberOfstrucktParam].split("int")[1].trim();
-									str = str.replace(") {","");
-									templine[lineNumberOfstrucktParam]=key+" *"+templine[lineNumberOfstrucktParam].split("int")[1].trim();
-									String templ="",str2 = "";
-									for(int i=0;i<templine.length;i++){
-										templ += templine[i];
-										if(i<templine.length-1)templ +=", ";
-										else if(i>0){
-											str2+="\n\t"+"self-> "+str+" = "+str+";";//we made this becuase we want to declare the obj in the function
-										}
-									}
-									f = true; 
-									endStruc = false;
-									line = templ+str2;		
-									content.append(line).append(System.lineSeparator());//we append every line in the file
-									System.out.println(classesFieldsMap.get(checkIdForParmObj));
-									for(int i=0;i<classesFieldsMap.get(checkIdForParmObj).size();i++){
-										line = reader.readLine();
-										content.append(line).append(System.lineSeparator());//we append every line in the file
-									}
+										placeObject(line, lineNumberOfstrucktParam, str , f);
+										endStruc = false;
+								}
+								else if(line.contains(checkIdForParmObj+"_printNumber")){
+									placeObject(line, lineNumberOfstrucktParam, str , f);
+ 
 								}
 								if(line.contains("}"))f=false;
 							}
@@ -308,7 +323,6 @@ grammar grammar_v3_2;
 							temlist[temlist.length-1] = temlist[temlist.length-1].replace(");","");
 							// this condition checks if tere is a keyword base for inheritance
 							if(f ==true && line.contains(str) && !(structInfoMap.get(key).contains(temlist[temlist.length-1]))){
-								System.out.println(str);
 								line = line.replace((temlist[temlist.length-1]),"base."+temlist[temlist.length-1]);
 							}
 							content.append(line).append(System.lineSeparator());//we append every line in the file
@@ -316,7 +330,7 @@ grammar grammar_v3_2;
 						}
 						reader.close();
 						// Write the modified content back to the file
-						BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c"));
+						BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\Damianos\\Desktop\\"+"testC.c"));
 						writer.write(content.toString());
 						writer.close();
 						System.out.println("File modified successfully.");
@@ -335,7 +349,7 @@ prog
 ;
 classes
     : {
-        pyFile = new File("test_input.py");
+        pyFile = new File("input.py");
         try{
             myReader = new Scanner(pyFile);
         }catch (IOException e) {
@@ -397,7 +411,7 @@ main:
         TmpRw.openFile("temp.c",false);      
         RW.writeFile("int main(){\n");
 		RW.closeFile();
-		File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c");
+		File temp = new File("C:\\Users\\Damianos\\Desktop\\"+"testC.c");
 		try{
 			Scanner myReader = new Scanner(temp);
 			Boolean structFlag = false;
@@ -1159,5 +1173,3 @@ COMMENT: '"""' .*? '"""' ->channel(HIDDEN);
 //  ;
 point: '.';
 WS: [ \r\n\t]+ -> skip;
-has context menu
-
