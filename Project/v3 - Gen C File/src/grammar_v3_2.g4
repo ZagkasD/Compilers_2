@@ -15,12 +15,10 @@ In v3_x we are working on the output file in c
 TODO in gen c file:
     add return 0 at main end
     fix if else at def millenium
-    add (Person *) at printf at main
 */ 
 
-/* TODO getPid in StupidPrint about class Employee,
-that employee pid must be in self->etc */
-
+// TODO objParam, at else if for other function not init
+// if create obj at function, add base when using fields from inheritance
 
 grammar grammar_v3_2;
 
