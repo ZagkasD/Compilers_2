@@ -2,8 +2,16 @@
 In v3_x we are working on the output file in c
 */
 // TODO add errors for missing functions/vars
-// TODO formal parameters in functions when they are objects eg.int Person_getPid(Person *self)
-grammar ExprParser;
+// TODO formal parameters in functions when they are objects eg.int Person_getPid(Person *self)\
+
+// TODO fix "%d\n", 
+
+/*
+    Today's Work
+    Problem: Function with object from main as parameter
+*/
+
+grammar grammar_v3_2;
 @header{
 	import java.io.BufferedReader;
 	import java.io.BufferedWriter;
@@ -140,7 +148,7 @@ grammar ExprParser;
         public void openFile(String filename,boolean f) {
 			this.filename = filename;
             try {
-              myWriter = new FileWriter("C:\\Users\\Damianos\\Desktop\\"+filename,f);
+              myWriter = new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+filename,f);
             } catch (IOException e) {
               System.out.println("Open file,an error occurred.");
               e.printStackTrace();
@@ -149,7 +157,7 @@ grammar ExprParser;
         public void merge(String filename)
         {
             try {
-                File temp = new File("C:\\Users\\Damianos\\Desktop\\"+filename);
+                File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+filename);
                 if (returnFlag == 1) writeFile("int ");
                 else if(returnFlag !=-1 )writeFile("void ");
                 // Write temp file to original file
@@ -175,7 +183,7 @@ grammar ExprParser;
         }
 		public void seekInfile(int leng,String s)
 		{
-			try (RandomAccessFile file = new RandomAccessFile("C:\\Users\\Damianos\\Desktop\\"+this.filename, "rw")) {
+			try (RandomAccessFile file = new RandomAccessFile("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+this.filename, "rw")) {
 				// Move the pointer to the desired position (e.g., byte offset 5)
 				file.seek(file.length()-leng);
 				// Write new content at the specified position
@@ -219,20 +227,44 @@ grammar ExprParser;
 	public void objectParam(String paraitem){
 		// check if the parameter is not a number
 		if(!(paraitem.matches("-?\\d+(\\.\\d+)?"))){
-			//take all class names from hashmap to return their obj to check if parameter is an object or not 
+			
+            //take all class names from hashmap to return their obj to check if parameter is an object or not 
 			for (String key : objectPointsClassNameMap.keySet()) {
+                
+                // Parameter is field of class
 				if(objectPointsClassNameMap.get(key).contains(paraitem)){
 					try {
 						// Read the content of the file
-						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\Damianos\\Desktop\\"+"testC.c"));
+						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c"));
 						StringBuilder content = new StringBuilder();
 						String line;
 						int currentLineNumber = 1;
 						Boolean endStruc = false;
+						String str="";
+						HashMap<String, ArrayList<String>> structInfoMap = new HashMap<String, ArrayList<String>>();
+						ArrayList<String> structlist = new  ArrayList<String>();
+						Boolean fl = false,f=false;
+						Set<String> keys = lineOfClassStruct.keySet();
+						List<String> keyList = List.copyOf(keys);
+						int step = keyList.size()-1;
+
 						while ((line = reader.readLine()) != null) 
 						{
 							if (lineOfClassStruct != null && checkIdForParmObj != null)
 							{
+								if(currentLineNumber == lineOfClassStruct.get(keyList.get(step)).get(1) && step>0){
+									structInfoMap.put((line.replace("}","")).replace(";",""),structlist);
+									fl = false;
+									step-=1;
+									structlist = new  ArrayList<String>();
+								}
+								if(fl == true){
+									int len = line.split(" ").length-1;
+									structlist.add(line.split(" ")[len].replace(";",""));	
+								}
+								if(line.contains("typedef struct{")){
+									fl = true;
+								}
 								// we use this condition to check if we are in the proper struct 
 								if (currentLineNumber == lineOfClassStruct.get(checkIdForParmObj).get(0) && lineNumberOfstrucktParam>0){
 									//we use this loop to find and put the proper declaration into our variable 
@@ -249,7 +281,7 @@ grammar ExprParser;
 								//we made this condition to place the proper object in parameters 
 								else if(line.contains(checkIdForParmObj+"_init") && endStruc == true){
 									String[] templine = line.split(",");
-									String str = templine[lineNumberOfstrucktParam].split("int")[1].trim();
+									str = templine[lineNumberOfstrucktParam].split("int")[1].trim();
 									str = str.replace(") {","");
 									templine[lineNumberOfstrucktParam]=key+" *"+templine[lineNumberOfstrucktParam].split("int")[1].trim();
 									String templ="",str2 = "";
@@ -260,16 +292,31 @@ grammar ExprParser;
 											str2+="\n\t"+"self-> "+str+" = "+str+";";//we made this becuase we want to declare the obj in the function
 										}
 									}
+									f = true; 
 									endStruc = false;
 									line = templ+str2;		
+									content.append(line).append(System.lineSeparator());//we append every line in the file
+									System.out.println(classesFieldsMap.get(checkIdForParmObj));
+									for(int i=0;i<classesFieldsMap.get(checkIdForParmObj).size();i++){
+										line = reader.readLine();
+										content.append(line).append(System.lineSeparator());//we append every line in the file
+									}
 								}
+								if(line.contains("}"))f=false;
+							}
+							String[] temlist = line.split("->");
+							temlist[temlist.length-1] = temlist[temlist.length-1].replace(");","");
+							// this condition checks if tere is a keyword base for inheritance
+							if(f ==true && line.contains(str) && !(structInfoMap.get(key).contains(temlist[temlist.length-1]))){
+								System.out.println(str);
+								line = line.replace((temlist[temlist.length-1]),"base."+temlist[temlist.length-1]);
 							}
 							content.append(line).append(System.lineSeparator());//we append every line in the file
 							currentLineNumber++;
 						}
 						reader.close();
 						// Write the modified content back to the file
-						BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\Damianos\\Desktop\\"+"testC.c"));
+						BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c"));
 						writer.write(content.toString());
 						writer.close();
 						System.out.println("File modified successfully.");
@@ -288,7 +335,7 @@ prog
 ;
 classes
     : {
-        pyFile = new File("input.py");
+        pyFile = new File("test_input.py");
         try{
             myReader = new Scanner(pyFile);
         }catch (IOException e) {
@@ -350,7 +397,7 @@ main:
         TmpRw.openFile("temp.c",false);      
         RW.writeFile("int main(){\n");
 		RW.closeFile();
-		File temp = new File("C:\\Users\\Damianos\\Desktop\\"+"testC.c");
+		File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c");
 		try{
 			Scanner myReader = new Scanner(temp);
 			Boolean structFlag = false;
@@ -987,17 +1034,19 @@ obj
         }
     '.'ID  
 		{
+			/* an klironomis dedomena tote des an erxese apo klironomikotita h oxi */
 			if(dontWriteInheritanceData == false){
 				if(wrInFinallCfile == true){
-					if(klironomikotita == false){
-						if (rmTabsCallstat == true)RW.writeFile(id+"->");
+					if(klironomikotita == false){//oi sunartiseis init pou den einai se klironomikotita
+						if (rmTabsCallstat == true)RW.writeFile("self->"+id+"->");
 						else RW.writeFile("\t".repeat(tabCounter)+id+"->");
 						RW.writeFile($ID.text);
 					}
 					else {
+						/*we made this condition to check if every init function has inherited fields */
 						if ((classesFieldsMap.get(klironomikotitaName)).contains($ID.text)){
 							if((classesFieldsMap.get(klironomikotitaName)).size() == counterFileds){
-								RW.writeFile(klironomikotitaName+"_init(("+klironomikotitaName+"*)");
+								RW.writeFile("\t".repeat(tabCounter)+klironomikotitaName+"_init(("+klironomikotitaName+"*)");
 								ArrayList<String> values = new ArrayList<String>();
 								for (String value : classesFieldsMap.get(klironomikotitaName)){
 									values.add(value);
@@ -1006,7 +1055,7 @@ obj
 							}
 						}
 						else {
-							RW.writeFile(id+"->");
+							RW.writeFile("\t".repeat(tabCounter)+id+"->");
 							RW.writeFile($ID.text);
 						}
 						counterFileds+=1;
@@ -1023,25 +1072,7 @@ obj
         {
 			if(dontWriteInheritanceData == false){
 				id = $ID.text;
-			}	/*if(wrInFinallCfile == true){
-					for (String key : objectPointsClassNameMap.keySet()) {
-						if(objectPointsClassNameMap.get(key).contains($ID.text)){
-							ClassNameForDowncasting = key;
-							if(rmTabsCallstat==false)RW.writeFile("\t".repeat(tabCounter)+key+"_");
-							else RW.writeFile(key+"_");
-						}
-					}
-				}
-				else {
-					for (String key : objectPointsClassNameMap.keySet()) {
-						if(objectPointsClassNameMap.get(key).contains($ID.text)){
-							ClassNameForDowncasting = key;
-							if(rmTabsCallstat==false)TmpRw.writeFile("\t".repeat(tabCounter)+key+"_");
-							else TmpRw.writeFile(key+"_");
-						}
-					}
-				}
-			}*/
+			}
         }
 	'.'{rmTabsCallstat = true;}callStat{rmTabsCallstat = false;}
 ;
@@ -1128,3 +1159,5 @@ COMMENT: '"""' .*? '"""' ->channel(HIDDEN);
 //  ;
 point: '.';
 WS: [ \r\n\t]+ -> skip;
+has context menu
+
