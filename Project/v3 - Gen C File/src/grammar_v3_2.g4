@@ -3,7 +3,7 @@ In v3_x we are working on the output file in c
 */
 // TODO add errors for missing functions/vars
 // TODO formal parameters in functions when they are objects eg.int Person_getPid(Person *self)
-grammar ExprParser;
+grammar grammar_v3_2;
 @header{
 	import java.io.BufferedReader;
 	import java.io.BufferedWriter;
