@@ -20,6 +20,8 @@ PRINT             : 'print';
 AND               : 'and';
 NOT               : 'not';
 OR                : 'or';
+NAME              : '__name__';
+MAIN              : '\'__main__\'';
 
 // Flow Controls
 LPARA             : '(';
@@ -43,7 +45,7 @@ INT               : [0-9]+ ('.' [0-9]+)?;
 // line 2:33 extraneous input '\n' expecting {'if', 'while', 'return', 'pass', 'print', ID}
 // Even though NEWLINE rules isn't used
 // NEWLINE           : ('\n')+;
-COMMENT           : '\'\'\'' .*? '\'\'\'' ->channel(HIDDEN);
+COMMENT           : ('\'\'\'' .*? '\'\'\'' | '"""' .*? '"""') ->channel(HIDDEN);
 
 // // skip doesn't generate tokens for whitespace characters
 // // WS: [ \r\n\t]+ -> skip;

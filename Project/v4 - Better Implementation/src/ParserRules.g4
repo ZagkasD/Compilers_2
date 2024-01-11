@@ -8,6 +8,7 @@ classes
 
 class
     : CLASS ID COLON initFunction functions
+    | CLASS ID LPARA ID RPARA COLON initFunction functions
 ;
 
 initFunction
@@ -17,6 +18,7 @@ initFunction
 
 functions
     :function (function)*
+    |
 ;
 
 function
@@ -25,7 +27,8 @@ function
 ;
 
 main
-    :
+    :IF NAME REL_OP MAIN COLON
+    statements
 ;
 
 statements
@@ -118,11 +121,17 @@ term
 factor
     :INT
     |ID
-    // TODO ID idtail
     |obj
     |LPARA expression RPARA
 ;
 
 actualparlist
-    :
+    :actualparitem (COMMA actualparitem)*
+    |
+;
+
+actualparitem
+    :expression
+    |obj
+    |ID
 ;
