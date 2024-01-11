@@ -7,11 +7,11 @@ classes
 ;
 
 class
-    : 'class' ID ':' initFunction functions 
+    : CLASS ID COLON initFunction functions
 ;
 
 initFunction
-    :'def''__init__(' formalparlist ') :'
+    :DEF INIT LPARA formalparlist RPARA COLON
     statements
 ;
 
@@ -20,68 +20,12 @@ functions
 ;
 
 function
-    :'def' ID '(' formalparlist ') :'
+    :DEF ID LPARA formalparlist RPARA COLON
     statements
 ;
 
 main
     :
-;
-
-formalparlist
-    :formalparitem (','formalparitem)*
-;
-
-formalparitem
-    :ID | obj |
-;
-
-obj
-    :ID '.' ID
-    |ID '.' callStat
-;
-
-expression
-    :optionalSign term (ADD_OP term)*
-;
-
-term
-    :factor (MUL_OP factor)*
-;
-
-factor
-    :INT
-    |ID
-    // @TODO ID idtail
-    |obj
-    |'('expression')'
-;
-
-optionalSign
-    :ADD_OP
-    |
-;
-
-condition
-    :
-;
-
-elsepart
-    :
-;
-
-actualparlist
-    :
-;
-
-boolterm
-    :boolfactor ('and' boolfactor)*
-;
-
-boolfactor
-    :'not' '(' condition ')'
-    |'(' condition ')'
-    |expression REL_OP expression
 ;
 
 statements
@@ -95,32 +39,90 @@ statement
     |printStat
     |returnStat
     |callStat
-    |'pass'
+    |PASS
 ;
 
 assignmentStat
-    : ID | obj '=' callStat | expression
+    : (ID | obj) AssignOP (callStat | expression)
 ;
 
 ifStat
-    :'if' condition ':'
-    elsepart
+    :IF condition COLON
     statements
+    elsepart
 ;
 
 whileStat
-    :'while (' condition ') :'
+    :WHILE LPARA condition RPARA COLON
     statements
 ;
 
 printStat
-    :'print (' expression ')'
+    :PRINT LPARA expression RPARA
 ;
 
 returnStat
-    : 'return ' expression
+    : RETURN expression
 ;
 
 callStat
-    :obj | ID '(' actualparlist ')'
+    :(obj | ID) LPARA actualparlist RPARA
+;
+
+condition
+    :boolterm (OR boolterm)*
+;
+
+boolterm
+    :boolfactor (AND boolfactor)*
+;
+
+boolfactor
+    :NOT LPARA condition RPARA
+    |LPARA condition RPARA
+    |expression REL_OP expression
+;
+
+elsepart
+    :ELSE COLON
+    statements
+    |
+;
+
+formalparlist
+    :formalparitem (COMMA formalparitem)*
+;
+
+formalparitem
+    :ID | obj |
+;
+
+obj
+    :ID POINT ID
+    |ID POINT callStat
+;
+
+expression
+    :optionalSign term (ADD_OP term)*
+;
+
+optionalSign
+    :ADD_OP
+    |
+;
+
+term
+    :factor (MUL_OP factor)*
+;
+
+factor
+    :INT
+    |ID
+    // TODO ID idtail
+    |obj
+    |LPARA expression RPARA
+;
+
+actualparlist
+    :
 ;
