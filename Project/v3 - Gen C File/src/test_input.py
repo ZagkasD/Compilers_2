@@ -26,7 +26,8 @@ class Employee(Person):
 		return self.afm
 
 class StupidPrint:
-	def __init__(self, employee):
+	def __init__(self, number, employee):
+		self.number = number
 		print(employee.pid)
 		print(employee.born)
 		print(employee.afm)
@@ -45,4 +46,4 @@ if __name__ == '__main__':
 	print(peter.getDepartment())
 	print(george.getPid())
 	print(peter.getPid())
-	stupid = StupidPrint(peter)
+	stupid = StupidPrint(1,peter)
