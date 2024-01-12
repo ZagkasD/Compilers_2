@@ -1,12 +1,9 @@
 /*
 In v3_x we are working on the output file in c
-
-Today's Work
-Fixing the "base" when var is from different struct
 */
-
-grammar grammar_v3_1;
-
+// TODO add errors for missing functions/vars
+// TODO formal parameters in functions when they are objects eg.int Person_getPid(Person *self)
+grammar ExprParser;
 @header{
 	import java.io.BufferedReader;
 	import java.io.BufferedWriter;
@@ -35,6 +32,7 @@ grammar grammar_v3_1;
 	HashMap<String, ArrayList<Integer>> lineOfClassStruct = new HashMap<String, ArrayList<Integer>>();
 	HashMap<String, ArrayList<String>> classesFieldsMap = new HashMap<String, ArrayList<String>>();
 	HashMap<String, ArrayList<String>> objectPointsClassNameMap = new HashMap<String, ArrayList<String>>();
+	HashMap<String, String> childAndParent = new HashMap<String, String>();
     public class Scope{
         private ArrayList <Entity> entities_list = new ArrayList<Entity>();
         private int _nesting_level;
@@ -225,20 +223,23 @@ grammar grammar_v3_1;
 			templ += templine[i];
 			if(i<templine.length-1)templ +=", ";
 			else if(i>0){
-				str2+="\n\t"+"self-> "+str+" = "+str+";";//we made this becuase we want to declare the obj in the function
+				str2+="\t"+"self->"+str+" = "+str+";";//we made this becuase we want to declare the obj in the function
 			}
 		}
-		line = templ+str2;	
+		line = templ;
+		content.append(line).append(System.lineSeparator());
+		line = str2;	
 		//we use this condition to make sure the declarationof the objects in the function will not be changed
-		for(int i=0;i<classesFieldsMap.get(checkIdForParmObj).size();i++){
-				System.out.println("in for "+line);
-			try{
+		//for(int i=0;i<classesFieldsMap.get(checkIdForParmObj).size()-1;i++){
+		try{
+			if(templine.length == 1){
 				content.append(line).append(System.lineSeparator());//we append every line in the file
 				line = reader.readLine();
-			}catch (IOException e) {
-				e.printStackTrace();
 			}
+		}catch (IOException e) {
+			e.printStackTrace();
 		}
+		//}
 		return line;
 	}
 	public String outputPrintf(String line){
@@ -249,7 +250,7 @@ grammar grammar_v3_1;
 				if(printlist.length>1 && i<printlist.length-1)out+="%d, ";
 				else if(printlist.length == 1 || i == printlist.length-1)out+="%d ";
 			}
-			out+="\",";
+			out+="\\n\",";
 			String[] tempprint = printlist[0].split("\\(");
 			line = line.replace(tempprint[1],out+tempprint[1]);
 		}
@@ -318,7 +319,7 @@ grammar grammar_v3_1;
 										endStruc = false;
 										f = true; 
 								}
-								else if(line.contains(checkIdForParmObj+"_printNumber")){
+								else if(line.split("_").length > 1 && line.contains(checkIdForParmObj+"_"+(((line.split("_"))[1]).split(" \\("))[0])){
 									String[] templine = line.split(",");
 									if(templine.length > 1 ){
 										str = templine[paramCounter].split("int")[1].trim();
@@ -326,16 +327,28 @@ grammar grammar_v3_1;
 										templine[paramCounter]=key+" *"+templine[paramCounter].split("int")[1].trim();
 										line = placeObject(content,reader,line,key, str,templine);
 									}
+									else if(templine.length == 1){
+										content.append(line).append(System.lineSeparator());//we append every line in the file
+										line = reader.readLine();
+									}
 									f = true; 
 									paramCounter++;
 								}
 								if(line.contains("}"))f=false;
 							}
-							//String[] temlist = line.split("->");
-							//temlist[temlist.length-1] = temlist[temlist.length-1].replace(");","");
 							// this condition checks if tere is a keyword base for inheritance
-							if(f == true){
-								//System.out.println(line);
+							if(!(structInfoMap.isEmpty()) && f == true){
+								for(String parameter: structInfoMap.get(key)){
+									if(line.contains(parameter))continue;
+									else{
+										String mamaClass = childAndParent.get(key);
+										for(String mamaparameter:structInfoMap.get(mamaClass)){
+											if(line.contains(mamaparameter))line = line.replace(mamaparameter,"base."+mamaparameter);
+											else continue;
+										}
+									}
+									break;
+								}
 							}
 							content.append(line).append(System.lineSeparator());//we append every line in the file
 							currentLineNumber++;
@@ -495,13 +508,15 @@ initFunction
         ArrayList <Entity> entities_list = scopes_list.get(scopes_list.size()-2).getEntitiesList();
         Function fun = (Function) entities_list.get(entities_list.size()-1);
         //we use this to fill the struct
-		if(klironomikotita == true)RW.writeFile("\t".repeat(tabCounter)+klironomikotitaName+" base;\n");
+		if(klironomikotita == true){
+			childAndParent.put(tempNameClass,klironomikotitaName);
+			RW.writeFile("\t".repeat(tabCounter)+klironomikotitaName+" base;\n");
+		}
 		tempList = new ArrayList<String>();
         for(int i=0;i<fun.getFormalParList().size();i++){
 			tempList.add(fun.getFormalParList().get(i).getName());
 			classesFieldsMap.put(tempNameClass,tempList);
 			if(i>0 && klironomikotita == true){
-				System.out.println((classesFieldsMap.get(klironomikotitaName)));
 				if (!((classesFieldsMap.get(klironomikotitaName)).contains(fun.getFormalParList().get(i).getName()))){
 					RW.writeFile("\t".repeat(tabCounter)+"int "+fun.getFormalParList().get(i).getName()+";\n");
 				}
