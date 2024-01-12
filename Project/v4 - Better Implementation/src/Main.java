@@ -4,7 +4,11 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        // Path to the Python file
+        // Open and create the generated C file
+        String generatedCFile = "generatedC.c";
+        CFileWriter.getInstance().openFile(generatedCFile);
+
+        // Input the Python file
         String filePath = "pythonExample1.py";
         CharStream input = CharStreams.fromFileName(filePath);
 
@@ -15,14 +19,17 @@ public class Main {
         // Instantiate the parser
         LanguageParser parser = new LanguageParser(tokens);
 
-        ParseTree tree = parser.prog(); // 'prog' is the start rule in your grammar
+        ParseTree tree = parser.prog(); // 'prog' is the start rule in the grammar
 
         // Create a custom listener
         ParseTreeWalker walker = new ParseTreeWalker();
-        MyListener listener = new MyListener();
-
+        ClassesListener classesListener = new ClassesListener();
 
         // Walk the parse tree with the listener
-        walker.walk(listener, tree);
+        walker.walk(classesListener, tree);
+
+        // Close the file
+        CFileWriter.getInstance().closeFile();
     }
 }
+
