@@ -23,13 +23,12 @@ public class Main {
 
         // Create a custom listener
         ParseTreeWalker walker = new ParseTreeWalker();
-        ClassesListener classesListener = new ClassesListener();
+        MyListener myListener = new MyListener();
 
         // Walk the parse tree with the listener
-        walker.walk(classesListener, tree);
+        walker.walk(myListener, tree);
 
         // Close the file
         CFileWriter.getInstance().closeFile();
     }
 }
-

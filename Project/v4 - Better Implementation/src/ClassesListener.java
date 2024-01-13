@@ -1,13 +1,13 @@
-import java.io.IOException;
 
 public class ClassesListener extends LanguageBaseListener {
+
+    public ClassesListener(){
+
+    }
+
     @Override
     public void enterClasses(LanguageParser.ClassesContext ctx) {
-        try {
-            String include = "#include <stdio.h>\n";
-            CFileWriter.getInstance().writeToFile(include);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        System.out.println("Entered rule classes");
+        
     }
 }
