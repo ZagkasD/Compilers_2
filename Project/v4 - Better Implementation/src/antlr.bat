@@ -1,0 +1,1 @@
+antlr4 Language.g4 && javac Language*.java && grun Language prog -gui 
