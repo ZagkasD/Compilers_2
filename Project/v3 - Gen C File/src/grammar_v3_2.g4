@@ -3,7 +3,7 @@ In v3_x we are working on the output file in c
 */
 // TODO add errors for missing functions/vars
 // TODO formal parameters in functions when they are objects eg.int Person_getPid(Person *self)
-grammar ExprParser;
+grammar grammar_v3_2;
 @header{
 	import java.io.BufferedReader;
 	import java.io.BufferedWriter;
@@ -141,7 +141,7 @@ grammar ExprParser;
         public void openFile(String filename,boolean f) {
 			this.filename = filename;
             try {
-              myWriter = new FileWriter("C:\\Users\\Damianos\\Desktop\\"+filename,f);
+              myWriter = new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src"+filename,f);
             } catch (IOException e) {
               System.out.println("Open file,an error occurred.");
               e.printStackTrace();
@@ -150,7 +150,7 @@ grammar ExprParser;
         public void merge(String filename)
         {
             try {
-                File temp = new File("C:\\Users\\Damianos\\Desktop\\"+filename);
+                File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src"+filename);
                 if (returnFlag == 1) writeFile("int ");
                 else if(returnFlag !=-1 )writeFile("void ");
                 // Write temp file to original file
@@ -176,7 +176,7 @@ grammar ExprParser;
         }
 		public void seekInfile(int leng,String s)
 		{
-			try (RandomAccessFile file = new RandomAccessFile("C:\\Users\\Damianos\\Desktop\\"+this.filename, "rw")) {
+			try (RandomAccessFile file = new RandomAccessFile("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src"+this.filename, "rw")) {
 				// Move the pointer to the desired position (e.g., byte offset 5)
 				file.seek(file.length()-leng);
 				// Write new content at the specified position
@@ -264,7 +264,7 @@ grammar ExprParser;
 				if(objectPointsClassNameMap.get(key).contains(paraitem)){
 					try {
 						// Read the content of the file
-						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\Damianos\\Desktop\\"+"testC.c"));
+						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src"+"testC.c"));
 						StringBuilder content = new StringBuilder();
 						String line;
 						int currentLineNumber = 1;
@@ -355,10 +355,9 @@ grammar ExprParser;
 						}
 						reader.close();
 						// Write the modified content back to the file
-						BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\Damianos\\Desktop\\"+"testC.c"));
+						BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src"+"testC.c"));
 						writer.write(content.toString());
 						writer.close();
-						System.out.println("File modified successfully.");
 					} catch (IOException e) {
 						e.printStackTrace();
 					}					
@@ -374,7 +373,7 @@ prog
 ;
 classes
     : {
-        pyFile = new File("input.py");
+        pyFile = new File("test_input.py");
         try{
             myReader = new Scanner(pyFile);
         }catch (IOException e) {
@@ -436,7 +435,7 @@ main:
         TmpRw.openFile("temp.c",false);      
         RW.writeFile("int main(){\n");
 		RW.closeFile();
-		File temp = new File("C:\\Users\\Damianos\\Desktop\\"+"testC.c");
+		File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src"+"testC.c");
 		try{
 			Scanner myReader = new Scanner(temp);
 			Boolean structFlag = false;
@@ -469,7 +468,7 @@ main:
         RW.merge("temp.c");
         RW.writeFile("}\n");
         RW.closeFile();
-		temp = new File("C:\\Users\\Damianos\\Desktop\\"+"testC.c");
+		temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src"+"testC.c");
 		StringBuilder content = new StringBuilder();
 		try{
 			Scanner myReader = new Scanner(temp);
@@ -479,7 +478,7 @@ main:
 				content.append(line).append(System.lineSeparator());//we append every line in the file
 			}
 			myReader.close();
-			BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\Damianos\\Desktop\\"+"testC.c"));
+			BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src"+"testC.c"));
 			writer.write(content.toString());
 			writer.close();
 		}
