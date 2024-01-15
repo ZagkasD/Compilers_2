@@ -76,7 +76,7 @@ int main(){
 	printf ("%d \n",Employee_getDepartment(&peter  ));
 Employee_setDepartment(&peter, 2);
 	printf ("%d \n",Employee_getDepartment(&peter  ));
-	printf ("%d \n",Employee_getPid(&george  ));
+	printf ("%d \n",Person_getPid(&george  ));
 	printf ("%d \n",Employee_getPid(&peter  ));
 	StupidPrint	stupid;
 	StupidPrint_init(&stupid  ,&peter);
