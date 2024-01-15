@@ -1,0 +1,17 @@
+	Person	george;
+	Person_init(&george, 200223,2002);
+	Person	john;
+	Person_init(&john, 200055,2000);
+	Employee	peter;
+	Employee_init(&peter, 200122,2001,990122,1);
+	printf (Person_getBorn(&george  ));
+	printf (Person_getBorn(&john  ));
+	printf (Person_getBorn((Person *)&peter  ));
+	printf (Person_millenium((Person *)&peter  ));
+	printf (Employee_getDepartment(&peter  ));
+Employee_setDepartment(&peter, 2);
+	printf (Employee_getDepartment(&peter  ));
+	printf (Employee_getPid(&george  ));
+	printf (Employee_getPid(&peter  ));
+	StupidPrint	stupid;
+	StupidPrint_init(&stupid  ,&peter);
