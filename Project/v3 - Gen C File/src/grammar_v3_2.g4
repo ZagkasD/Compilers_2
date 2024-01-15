@@ -4,13 +4,6 @@ In v3_x we are working on the output file in c
 
 // Today's work: fix duplicate classes/parameters/variables and continue the report
 
-// TODO check for duplicate variables
-// explain that python doesnt do declarations so there isn't an issue with duplicate variables in c
-
-// Note: formalparitem doesn't need an obj. In python parameters, cant be  employee.afm
-// Note for report: The use of actions in the grammar file has made the coding exceptionally difficult. A simple example
-// we need to check 
-
 grammar grammar_v3_2;
 @header{
 	import java.io.BufferedReader;
