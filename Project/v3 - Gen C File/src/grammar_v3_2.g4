@@ -1,18 +1,10 @@
 /*
 In v3_x we are working on the output file in c
 */
-// TODO add errors for missing functions/vars
-// TODO formal parameters in functions when they are objects in main eg. stupid = StupidPrint(peter)
-// in c StupidPrint_init(&stupid, &peter);
-// TODO add semi column and \n at Employee_setDepartment(2) and the comma in its parameters
 
-// Comment line 547: explanation on these things. Needed for removing the extra stuff
-// like new lines, semi columns and equals. 
-
-// changes line 234
+// Today's work: fix duplicate classes/parameters/variables and continue the report
 
 grammar grammar_v3_2;
-
 @header{
 	import java.io.BufferedReader;
 	import java.io.BufferedWriter;
@@ -26,20 +18,32 @@ grammar grammar_v3_2;
 	import java.util.*;
 }
 @parser::members {
+
+    // Change this to the directory where the output file will go
+    String dirPath = "C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src\\";
+    // Change this to the directory where your python input is
+    String pythonInput = "pythonBasicInput.py";
+
+
     ArrayList <Scope> scopes_list = new ArrayList<Scope>();
+    // List for storing class names
+    ArrayList <String> classesList = new ArrayList <String>();
     addEntity entity;
     WriteToFile RW;
     WriteToFile TmpRw;
-    String tempNameClass,line,tempAssignment,klironomikotitaName,id,checkIdForParmObj;
-    Boolean wrInFinallCfile,klironomikotita=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false;
+    String tempNameClass,line,tempAssignment,klironomikotitaName,id,checkIdForParmObj,classNameForDowncasting;
+    Boolean wrInFinalCFile,klironomikotita=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false,callStatFlag=false;
     // Raise assignFlag in assignmentStat before callStat|expression and lower it after them
     int returnFlag,tabCounter = 0,counterFileds=2,lineCounter = 1,lineNumberOfstrucktParam=1;
     File pyFile;
     Scanner myReader;
-	ArrayList<String> tempList;
+	ArrayList<String> tempList,tempFuncName;
+	HashMap<String, ArrayList<String>>  classesAndFunctions= new HashMap<String, ArrayList<String>>();
 	HashMap<String, ArrayList<Integer>> lineOfClassStruct = new HashMap<String, ArrayList<Integer>>();
 	HashMap<String, ArrayList<String>> classesFieldsMap = new HashMap<String, ArrayList<String>>();
 	HashMap<String, ArrayList<String>> objectPointsClassNameMap = new HashMap<String, ArrayList<String>>();
+	HashMap<String, String> childAndParent = new HashMap<String, String>();
+
     public class Scope{
         private ArrayList <Entity> entities_list = new ArrayList<Entity>();
         private int _nesting_level;
@@ -124,11 +128,11 @@ grammar grammar_v3_2;
         }
         public void add_parameter(String param){
             //go to the last entity of the last scope and add the parameters
-            FormalParameter objParm = new FormalParameter(param);
+            FormalParameter objParam = new FormalParameter(param);
             ArrayList <Entity> entities_list = scopes_list.get(scopes_list.size()-1).getEntitiesList();
             // Important. Downcast the return object of the entities_list, because it stores Entity type objects
             Function fun = (Function) entities_list.get(entities_list.size()-1);
-            fun.appendParToFormalParList( objParm);
+            checkUniqueParameter(objParam, fun);
         }
         public void add_variable(String name){
             Variable objVar = new Variable(name);
@@ -136,28 +140,41 @@ grammar grammar_v3_2;
             // Check for variable that already exist
             for (Entity ent : scopes_list.get(nesting_level).getEntitiesList()){
                 if(ent.getName() == name){
+                    // TODO fix this
                     System.out.println("Error, bro same name wtf!!!");
                 }
                 else scopes_list.get(scopes_list.size()-1).getEntitiesList().add(objVar);
             }
         }
+        public void checkUniqueParameter(FormalParameter parameter, Function function){
+            Boolean parameterIsNotUnique = false;
+            for (FormalParameter param:function.formal_par_list){                
+                if (param.getName().equals(parameter.getName())){
+                    parameterIsNotUnique = true;
+                    System.err.println("Error: Paremeter name '" + parameter + "' already used");
+                    System.exit(1);    
+                }
+            }
+            function.appendParToFormalParList(parameter);
+        }
     }
     public class WriteToFile {
         private FileWriter myWriter;
 		private String filename;
+
         public void openFile(String filename,boolean f) {
 			this.filename = filename;
             try {
-              myWriter = new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+filename,f);
+              myWriter = new FileWriter(dirPath+filename,f);
             } catch (IOException e) {
-              System.out.println("Open file,an error occurred.");
+              System.out.println("Open file,an error occurred while opening the file.");
               e.printStackTrace();
             }
         }
         public void merge(String filename)
         {
             try {
-                File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+filename);
+                File temp = new File(dirPath+filename);
                 if (returnFlag == 1) writeFile("int ");
                 else if(returnFlag !=-1 )writeFile("void ");
                 // Write temp file to original file
@@ -168,7 +185,7 @@ grammar grammar_v3_2;
                 }
                 myReader.close();
             } catch (FileNotFoundException e) {
-                System.out.println("An error occurred.");
+                System.out.println("An error occurred while mergin the file.");
                 e.printStackTrace();
             }
         }
@@ -177,14 +194,13 @@ grammar grammar_v3_2;
                 myWriter.write(str);
             }
             catch (IOException e) {
-                // TODO fix this system out
-                System.out.println("An error occurred OIOIOIOI.");
+                System.out.println("An error occurred while writing to file.");
                 e.printStackTrace();
             }
         }
 		public void seekInfile(int leng,String s)
 		{
-			try (RandomAccessFile file = new RandomAccessFile("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+this.filename, "rw")) {
+			try (RandomAccessFile file = new RandomAccessFile(dirPath+this.filename, "rw")) {
 				// Move the pointer to the desired position (e.g., byte offset 5)
 				file.seek(file.length()-leng);
 				// Write new content at the specified position
@@ -199,7 +215,25 @@ grammar grammar_v3_2;
                 myWriter.close();
             }
             catch (IOException e) {
-                System.out.println("An error occurred.");
+                System.out.println("An error occurred while closing the file.");
+                e.printStackTrace();
+            }
+        }
+
+        public void deleteFile() {
+            try {
+                // Close the FileWriter before attempting to delete the file
+                if (myWriter != null) {
+                    myWriter.close();
+                }
+
+                // Create a File object and delete the file
+                File fileToDelete = new File(dirPath + filename);
+                if (!(fileToDelete.delete())) {
+                    System.out.println("Failed to delete " + filename);
+                }
+            } catch (IOException e) {
+                System.out.println("An error occurred while deleting the file.");
                 e.printStackTrace();
             }
         }
@@ -225,33 +259,148 @@ grammar grammar_v3_2;
         }
         return total;
     }
+	public String placeObject(StringBuilder content,BufferedReader reader,String line,String key,String str,String[] templine ){
+		String templ="",str2 = "";
+		for(int i=0;i<templine.length;i++){
+			templ += templine[i];
+			if(i<templine.length-1)templ +=", ";
+			else if(i>0){
+				str2+="\t"+"self->"+str+" = "+str+";";//we made this becuase we want to declare the obj in the function
+			}
+		}
+		line = templ;
+		content.append(line).append(System.lineSeparator());
+		line = str2;	
+		//we use this condition to make sure the declarationof the objects in the function will not be changed
+		//for(int i=0;i<classesFieldsMap.get(checkIdForParmObj).size()-1;i++){
+		try{
+			if(templine.length == 1){
+				content.append(line).append(System.lineSeparator());//we append every line in the file
+				line = reader.readLine();
+			}
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+		//}
+		return line;
+	}
+	public String outputPrintf(String line){
+		if(line.contains("printf")){
+			String[] printlist = line.split(",");
+			String out="\"";
+
+            System.out.println("line = "+line);
+
+			for(int i=0;i<printlist.length;i++){
+				if(printlist.length>1 && i<printlist.length-1)out+="%d, ";
+				else if(printlist.length == 1 || i == printlist.length-1)out+="%d ";
+			}
+			out+="\\n\",";
+			String[] tempprint = printlist[0].split("\\(");
+			line = line.replace(tempprint[1],out+tempprint[1]);
+		}
+		return line;
+	}
 	public void objectParam(String paraitem){
+		// check if the parameter is not a number
 		if(!(paraitem.matches("-?\\d+(\\.\\d+)?"))){
+			//take all class names from hashmap to return their obj to check if parameter is an object or not 
 			for (String key : objectPointsClassNameMap.keySet()) {
 				if(objectPointsClassNameMap.get(key).contains(paraitem)){
 					try {
 						// Read the content of the file
-						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c"));
+						BufferedReader reader = new BufferedReader(new FileReader(dirPath+"outputFile.c"));
 						StringBuilder content = new StringBuilder();
 						String line;
 						int currentLineNumber = 1;
-						while ((line = reader.readLine()) != null) {
-							if (lineOfClassStruct != null && checkIdForParmObj != null){
-								if (currentLineNumber == lineOfClassStruct.get(checkIdForParmObj).get(0) && lineNumberOfstrucktParam>0){
+						Boolean endStruc = false;
+						String str="";
+						HashMap<String, ArrayList<String>> structInfoMap = new HashMap<String, ArrayList<String>>();
+						ArrayList<String> structlist = new  ArrayList<String>();
+						Boolean fl = false,f=false;
+						Set<String> keys = lineOfClassStruct.keySet();
+						List<String> keyList = List.copyOf(keys);
+						Set<String> Classeskeys = classesAndFunctions.keySet();
+						List<String> ClasseskeysList = List.copyOf(keys);
+						int step = keyList.size()-1;
+						int paramCounter = 1;//not init
+						while ((line = reader.readLine()) != null) 
+						{
+							if (lineOfClassStruct != null && checkIdForParmObj != null)
+							{
+								if(currentLineNumber == lineOfClassStruct.get(keyList.get(step)).get(1) && step>0){
+									structInfoMap.put((line.replace("}","")).replace(";",""),structlist);
+									fl = false;
+									step-=1;
+									structlist = new  ArrayList<String>();
+								}
+								if(fl == true){
+									int len = line.split(" ").length-1;
+									structlist.add(line.split(" ")[len].replace(";",""));	
+								}
+								if(line.contains("typedef struct{")){
+									fl = true;
+								}
+								// we use this condition to check if we are in the proper struct 
+								if (ClasseskeysList.contains(checkIdForParmObj) && currentLineNumber == lineOfClassStruct.get(checkIdForParmObj).get(0) && lineNumberOfstrucktParam>0){
+									//we use this loop to find and put the proper declaration into our variable 
+									//actually with this loop we move our pointer into the proper line which is the lineNumberOfstrucktParam
+									//which we have taken from main were the function was called 
 									for(int i=0;i<lineNumberOfstrucktParam;i++){
-										content.append(line).append(System.lineSeparator());
-										line = reader.readLine();
+										content.append(line).append(System.lineSeparator());//we append every line we dont need to change in the file 
+										line = reader.readLine();// we hold the last line which we need to change
 									}
 									 // Modify the line with the replacement text
-									line = key+line.split("int")[1];
+									line = "\t"+key+" *"+line.split("int")[1].trim();
+									endStruc = true;
+								}
+								//we made this condition to place the proper object in parameters 
+								else if(line.contains(checkIdForParmObj+"_init") && endStruc == true){
+										String[] templine = line.split(",");
+										str = templine[lineNumberOfstrucktParam].split("int")[1].trim();
+										str = str.replace(") {","");
+										templine[lineNumberOfstrucktParam]=key+" *"+templine[lineNumberOfstrucktParam].split("int")[1].trim();
+										line = placeObject(content,reader,line,key, str,templine);
+										endStruc = false;
+										f = true; 
+								}
+								else if(line.split("_").length > 1 && line.contains(checkIdForParmObj+"_"+(((line.split("_"))[1]).split(" \\("))[0])){
+									String[] templine = line.split(",");
+									if(templine.length > 1 ){
+										str = templine[paramCounter].split("int")[1].trim();
+										str = str.replace(") {","");
+										templine[paramCounter]=key+" *"+templine[paramCounter].split("int")[1].trim();
+										line = placeObject(content,reader,line,key, str,templine);
+									}
+									else if(templine.length == 1){
+										content.append(line).append(System.lineSeparator());//we append every line in the file
+										line = reader.readLine();
+									}
+									f = true; 
+									paramCounter++;
+								}
+								if(line.contains("}"))f=false;
+							}
+							// this condition checks if tere is a keyword base for inheritance
+							if(!(structInfoMap.isEmpty()) && f == true){
+								for(String parameter: structInfoMap.get(key)){
+									if(line.contains(parameter))continue;
+									else{
+										String mamaClass = childAndParent.get(key);
+										for(String mamaparameter:structInfoMap.get(mamaClass)){
+											if(line.contains(mamaparameter))line = line.replace(mamaparameter,"base."+mamaparameter);
+											else continue;
+										}
+									}
+									break;
 								}
 							}
-							content.append(line).append(System.lineSeparator());
+							content.append(line).append(System.lineSeparator());//we append every line in the file
 							currentLineNumber++;
 						}
 						reader.close();
 						// Write the modified content back to the file
-						BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c"));
+						BufferedWriter writer = new BufferedWriter(new FileWriter(dirPath+"outputFile.c"));
 						writer.write(content.toString());
 						writer.close();
 					} catch (IOException e) {
@@ -269,7 +418,7 @@ prog
 ;
 classes
     : {
-        pyFile = new File("test_input.py");
+        pyFile = new File(pythonInput);
         try{
             myReader = new Scanner(pyFile);
         }catch (IOException e) {
@@ -277,13 +426,24 @@ classes
                 e.printStackTrace();
             }
         RW = new WriteToFile();
-        RW.openFile("testC.c",false);
+        RW.openFile("outputFile.c",false);
         RW.writeFile("#include <stdio.h>\n");
     }class+  main
 ;
 class
+    // First rule for classes without inheritance
     : 'class' ID ':'
     {  
+        // Check for already used class name
+        String className = $ID.text;
+        if (!classesList.contains(className)){
+            classesList.add(className);
+        }
+        else if (classesList.contains(className)){
+            System.err.println("Error: Class name '" + className + "' already used");
+            System.exit(1);    
+        }
+        
         line = myReader.nextLine();
         int temp = ReturnTotalNumberOftabs(line) ;
         if(temp != -1 && temp!=tabCounter)
@@ -301,7 +461,20 @@ class
     {
         scope.remove_scope();
     }  
+
+    // Second rule for classes with inheritance
     |'class' ID{
+        
+        // Check for already used class name
+        String className = $ID.text;
+        if (!classesList.contains(className)){
+            classesList.add(className);
+        }
+        else if (classesList.contains(className)){
+            System.err.println("Error: Class name '" + className + "' already used");
+            System.exit(1);    
+        }
+
         line = myReader.nextLine();
         int temp = ReturnTotalNumberOftabs(line) ;
         if( temp != -1 && temp!=tabCounter)
@@ -328,10 +501,10 @@ main:
     {
         tabCounter+=1;
         returnFlag = -1;
-        TmpRw.openFile("temp.c",false);      
+        TmpRw.openFile("tempCFile.c",false);      
         RW.writeFile("int main(){\n");
 		RW.closeFile();
-		File temp = new File("C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Output File\\src\\"+"testC.c");
+		File temp = new File(dirPath+"outputFile.c");
 		try{
 			Scanner myReader = new Scanner(temp);
 			Boolean structFlag = false;
@@ -352,7 +525,7 @@ main:
 				lineCounter+=1;
 			}
 			myReader.close();
-			RW.openFile("testC.c",true);
+			RW.openFile("outputFile.c",true);
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -360,10 +533,32 @@ main:
     statements
     {
         TmpRw.closeFile();
+        
         // Reset the return flag for the next function
-        RW.merge("temp.c");
+        RW.merge("tempCFile.c");
+
+        // Delete temp c file after merging with main output C file
+        TmpRw.deleteFile();
+        
         RW.writeFile("}\n");
         RW.closeFile();
+		temp = new File(dirPath+"outputFile.c");
+		StringBuilder content = new StringBuilder();
+		try{
+			Scanner myReader = new Scanner(temp);
+			while (myReader.hasNextLine()) {
+				String line = myReader.nextLine();
+				if(!(line.contains("%d")))line = outputPrintf(line);
+				content.append(line).append(System.lineSeparator());//we append every line in the file
+			}
+			myReader.close();
+			BufferedWriter writer = new BufferedWriter(new FileWriter(dirPath+"outputFile.c"));
+			writer.write(content.toString());
+			writer.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
     }
 ;
 initFunction
@@ -386,7 +581,10 @@ initFunction
         ArrayList <Entity> entities_list = scopes_list.get(scopes_list.size()-2).getEntitiesList();
         Function fun = (Function) entities_list.get(entities_list.size()-1);
         //we use this to fill the struct
-		if(klironomikotita == true)RW.writeFile("\t".repeat(tabCounter)+klironomikotitaName+" base;\n");
+		if(klironomikotita == true){
+			childAndParent.put(tempNameClass,klironomikotitaName);
+			RW.writeFile("\t".repeat(tabCounter)+klironomikotitaName+" base;\n");
+		}
 		tempList = new ArrayList<String>();
         for(int i=0;i<fun.getFormalParList().size();i++){
 			tempList.add(fun.getFormalParList().get(i).getName());
@@ -405,24 +603,26 @@ initFunction
             else if(i>0)RW.writeFile(",int "+fun.getFormalParList().get(i).getName());
         }
         RW.writeFile(") {\n");
-        wrInFinallCfile = true;
+        wrInFinalCFile = true;
 		counterFileds =2;
     }
     (statements | 'pass')
     {
-        wrInFinallCfile = false;
+        wrInFinalCFile = false;
         RW.writeFile("\n}\n");
         scope.remove_scope();
         tabCounter -=1;
     }
 ;
 functions
-    :function ( function)*
+    :{tempFuncName = new ArrayList<String>();}function ( function)*
     |
 ;
 function
     :'def' ID
     {
+		tempFuncName.add($ID.text);
+		classesAndFunctions.put(tempNameClass,tempFuncName);
         tabCounter +=1;
         line = myReader.nextLine();
         int temp = ReturnTotalNumberOftabs(line) ;
@@ -441,7 +641,7 @@ function
         Function fun = (Function) entities_list.get(entities_list.size()-1);
         //grafoume se tmp arxeio epidi theloyme na doume ti topos einai h sinartisi
         TmpRw = new WriteToFile();
-        TmpRw.openFile("temp.c",false);      
+        TmpRw.openFile("tempCFile.c",false);      
         for(int i=0;i<fun.getFormalParList().size();i++)
         {
             // If it only has self as a parameter
@@ -462,7 +662,7 @@ function
         TmpRw.writeFile("\n}\n");
         TmpRw.closeFile();
         // Reset the return flag for the next function
-        RW.merge("temp.c");
+        RW.merge("tempCFile.c");
         returnFlag = 0;
         scope.remove_scope();
         tabCounter -=1;
@@ -505,7 +705,7 @@ statement
             System.exit(0);
         }
     }
-    |callStat
+    |{callStatFlag = true;}callStat
     {
         line = myReader.nextLine();
         int temp = ReturnTotalNumberOftabs(line) ;
@@ -522,11 +722,26 @@ eg. def foo(x)
 the x would be a formal parameter item
 */
 formalparlist
-    :formalparitem (','formalparitem)*
+    :
+    {
+        // List for storing formal parameters
+        //ArrayList <String> formalParameterList = new ArrayList <String>();
+    }
+    formalparitem (','formalparitem)*
 ;
 formalparitem
     :ID
     {
+        // Check for already used parameter name
+        // String parameterName = $ID.text;
+        // if (!formalParameterList.contains(parameterName)){
+        //     formalParameterList.add(parameterName);
+        // }
+        // else if (formalParameterList.contains(parameterName)){
+        //     System.err.println("Error: Parameter name '" + parameterName + "' already used");
+        //     System.exit(1);    
+        // }
+
         entity.add_parameter($ID.text);
     }
     |obj
@@ -550,21 +765,21 @@ actualparlist
 		// alla stin katw sinthiki an kalesoume mi sinartisi apeythias mporei na valei koma ekei poy den theloume
         if(!($actualparitem.text.isEmpty())){
 			objectParam($actualparitem.text);
-            if(wrInFinallCfile==true){
+            if(wrInFinalCFile==true){
 				RW.closeFile();
-				RW.seekInfile($actualparitem.text.length()+1,",");
-				RW.openFile("testC.c",true);
+				RW.seekInfile($actualparitem.text.length()+2,",");
+				RW.openFile("outputFile.c",true);
 			}
             else{
 				TmpRw.closeFile();
-				TmpRw.seekInfile($actualparitem.text.length()+1,",");
-				TmpRw.openFile("temp.c",true);
+				TmpRw.seekInfile($actualparitem.text.length()+2,",");
+				TmpRw.openFile("tempCFile.c",true);
 			}
         }
     }
     (','
     {
-        if(wrInFinallCfile == true)RW.writeFile(",");
+        if(wrInFinalCFile == true)RW.writeFile(",");
         else TmpRw.writeFile(",");
     }
     actualparitem {objectParam($actualparitem.text);})*
@@ -575,8 +790,8 @@ actualparitem
     |obj
     |ID
     {
-        if(wrInFinallCfile == true)RW.writeFile($ID.text);
-        else TmpRw.writeFile($ID.text);
+        if(wrInFinalCFile == true)RW.writeFile($ID.text+" ");
+        else TmpRw.writeFile($ID.text+" ");
     }
 ;
 assignmentStat
@@ -601,7 +816,7 @@ assignmentStat
         |obj{
 			if(klironomikotita == true){
 				if(counterFileds-1 > classesFieldsMap.get(klironomikotitaName).size()){
-					if (wrInFinallCfile == true)RW.writeFile(" = ");
+					if (wrInFinalCFile == true)RW.writeFile(" = ");
 					// Also store the equal sign. Will remove it later if in callStat
 					else TmpRw.writeFile(" = ");
 				}
@@ -609,7 +824,7 @@ assignmentStat
             }
 			else
 			{
-				if (wrInFinallCfile == true)RW.writeFile(" = ");
+				if (wrInFinalCFile == true)RW.writeFile(" = ");
 				// Also store the equal sign. Will remove it later if in callStat
 				else TmpRw.writeFile(" = ");
 			}
@@ -620,13 +835,13 @@ assignmentStat
     {
 		if(klironomikotita == true){
 			if(counterFileds-1 > classesFieldsMap.get(klironomikotitaName).size()){
-				if (wrInFinallCfile == true) RW.writeFile(";\n");
+				if (wrInFinalCFile == true) RW.writeFile(";\n");
 				else TmpRw.writeFile(";\n");
 			}
 		}
 		else
 		{
-			if (wrInFinallCfile == true) RW.writeFile(";\n");
+			if (wrInFinalCFile == true) RW.writeFile(";\n");
 			else TmpRw.writeFile(";\n");
 		}
     }
@@ -645,7 +860,7 @@ ifStat
             }
             // Need to set elseFlag false for each if
             elseFlag = false;
-            if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
+            if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
             else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
 			rmTabsCallstat = true;
         }
@@ -653,13 +868,13 @@ ifStat
     {
 		rmTabsCallstat = false;
         tabCounter +=1;
-        if(wrInFinallCfile==true)RW.writeFile("){\n");
+        if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
         statements
     {
         tabCounter -=1;
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     elsepart
@@ -673,7 +888,7 @@ ifStat
             System.exit(0);
         }
         elseFlag = false;
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
 		rmTabsCallstat = true;
     }
@@ -681,13 +896,13 @@ ifStat
     {
 		rmTabsCallstat = false;
         tabCounter +=1;
-        if(wrInFinallCfile==true)RW.writeFile("){\n");
+        if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
     statements
     {
         tabCounter -=1;
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     elsepart
@@ -702,7 +917,7 @@ elsepart
             System.out.println("Check your tabs near line: "+line);
             System.exit(0);
         }
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"else {\n");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"else {\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"else {\n");
         // Need this flag here to add return 0 at C when else doesn't exist
         elseFlag = true;
@@ -711,7 +926,7 @@ elsepart
     statements
     {
         tabCounter-=1;
-        if(wrInFinallCfile==true)RW.writeFile("}\n");
+        if(wrInFinalCFile==true)RW.writeFile("}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     |
@@ -719,7 +934,7 @@ elsepart
 whileStat
     :'while'
     {
-            if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"while (");
+            if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"while (");
             else TmpRw.writeFile("\t".repeat(tabCounter)+"while (");
 			rmTabsCallstat = true;
     }
@@ -727,18 +942,18 @@ whileStat
     {
 		rmTabsCallstat = false;
         tabCounter +=1;
-        if(wrInFinallCfile==true)RW.writeFile("){\n");
+        if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
     statements
     {
         tabCounter -=1;
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     |'while'
     {
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"while (");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"while (");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"while (");
 		rmTabsCallstat = true;
     }
@@ -746,34 +961,39 @@ whileStat
     {
 		rmTabsCallstat = false;
         tabCounter +=1;
-        if(wrInFinallCfile==true)RW.writeFile("){\n");
+        if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
     statements
     {
         tabCounter -=1;
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
 ;
 printStat
     :'print'
     {
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"printf (");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"printf (");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"printf (");
 		rmTabsCallstat = true;
     }
-    '(' expression')'
+    '(' expression(
+	','
+	{
+		if(wrInFinalCFile==true)RW.writeFile(",");
+        else TmpRw.writeFile(",");
+	}expression)*')'
     {
 		rmTabsCallstat = false;
-        if(wrInFinallCfile==true)RW.writeFile(");\n");
+        if(wrInFinalCFile==true)RW.writeFile(");\n");
         else TmpRw.writeFile(");\n");
     }
 ;
 returnStat
     : 'return '
         {
-            if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"return ");
+            if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"return ");
             else {
                 TmpRw.writeFile("\t".repeat(tabCounter)+"return ");
             }
@@ -782,18 +1002,18 @@ returnStat
         expression
         {
 			rmTabsCallstat = false;
-            if(wrInFinallCfile==true)RW.writeFile(";\n");
+            if(wrInFinalCFile==true)RW.writeFile(";\n");
             else TmpRw.writeFile(";\n");
             returnFlag = 1;
         }
     |'return ''('
     {
-        if(wrInFinallCfile==true)RW.writeFile("\t".repeat(tabCounter)+"return (");
+        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"return (");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"return (");
     }
     expression ')'
         {
-            if(wrInFinallCfile==true)RW.writeFile(");\n");
+            if(wrInFinalCFile==true)RW.writeFile(");\n");
             else TmpRw.writeFile(");\n");
             returnFlag = 1;
         }
@@ -815,7 +1035,7 @@ callStat
 					objectPointsClassNameMap.put($ID.text,new ArrayList<>());
 				}
 				objectPointsClassNameMap.get($ID.text).add(temp[0].trim());
-				if(wrInFinallCfile==true){
+				if(wrInFinalCFile==true){
 					RW.writeFile("\t".repeat(tabCounter)+$ID.text+temp[0]+";\n");
 					RW.writeFile("\t".repeat(tabCounter)+$ID.text+"_init");
 				}
@@ -825,13 +1045,44 @@ callStat
 					}
 			}
 			else{
-				if(wrInFinallCfile==true){
-					if(rmTabsCallstat == true)RW.writeFile($ID.text);
-					else RW.writeFile("\t".repeat(tabCounter)+$ID.text);
-				}
-				else {
-					if(rmTabsCallstat == true)TmpRw.writeFile($ID.text);
-					else TmpRw.writeFile("\t".repeat(tabCounter)+$ID.text);
+				for(String className: objectPointsClassNameMap.keySet()){
+                    // Check what type of class is the object id
+					if(objectPointsClassNameMap.get(className).contains(id)){
+                        
+                        // Check what class is the function from
+                        if(classesAndFunctions.get(className).contains($ID.text)){
+                            // Set this to not do downcasting, since the function is in this class
+                            classNameForDowncasting = className;
+                            if(wrInFinalCFile==true){
+                                if(rmTabsCallstat == true)RW.writeFile(className+"_"+$ID.text);
+                                else RW.writeFile("\t".repeat(tabCounter)+className+"_"+$ID.text);
+                            }
+                            else {
+                                if(rmTabsCallstat == true)TmpRw.writeFile(className+"_"+$ID.text);
+                                else TmpRw.writeFile("\t".repeat(tabCounter)+className+"_"+$ID.text);
+                            }
+                            break;
+                        }
+                        
+                        // This is where downcasting is needed for when a parent class calls a function of a child class on an
+                        // object that has the parent class type
+                        else {
+                            for(String className2: classesAndFunctions.keySet()){
+                                if(classesAndFunctions.get(className2).contains($ID.text)){
+                                    classNameForDowncasting = className2;
+                                    if(wrInFinalCFile==true){
+                                        if(rmTabsCallstat == true)RW.writeFile(className2+"_"+$ID.text);
+                                        else RW.writeFile("\t".repeat(tabCounter)+className2+"_"+$ID.text);
+                                    }
+                                    else {
+                                        if(rmTabsCallstat == true)TmpRw.writeFile(className2+"_"+$ID.text);
+                                        else TmpRw.writeFile("\t".repeat(tabCounter)+className2+"_"+$ID.text);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+					}
 				}
 			}
 		}
@@ -849,42 +1100,58 @@ callStat
     '('
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile == true)RW.writeFile("(");
+			if(wrInFinalCFile == true)RW.writeFile("(");
 			else TmpRw.writeFile("(");
 			if(assignFlag == true){
 				String[]temp = tempAssignment.split(" =");
-				if(wrInFinallCfile==true){
+				if(wrInFinalCFile==true){
 					//to keno meta to trim to exoume gia na min mas trwei ton xaraktira to seek pou kaname gia thn topothetisi tou komatos 
-					RW.writeFile("&"+temp[0].trim()+" ");
+					RW.writeFile("&"+temp[0].trim()+"  ");
 				}
 				else {
-					TmpRw.writeFile("&"+temp[0].trim()+" ");
+					TmpRw.writeFile("&"+temp[0].trim()+"  ");
 					}
 			}
 			else{
-				if(wrInFinallCfile==true){
-					RW.writeFile("&"+id+" ");
-				}
-				else {
-					TmpRw.writeFile("&"+id+" ");
+				for(String key:objectPointsClassNameMap.keySet()){
+					if(objectPointsClassNameMap.get(key).contains(id)&& !(classNameForDowncasting.equals(key))){
+						if(wrInFinalCFile==true){
+							RW.writeFile("("+classNameForDowncasting+" *)&"+id+"  ");
+						}
+						else {
+							TmpRw.writeFile("("+classNameForDowncasting+" *)&"+id+"  ");
+						}
+						break;
 					}
+					else{
+						if(wrInFinalCFile==true){
+							RW.writeFile("&"+id+"  ");
+						}
+						else {
+							TmpRw.writeFile("&"+id+"  ");
+						}
+						break;
+					}
+				}
 			}
 		}
     }
     actualparlist')'
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile == true){
+			if(wrInFinalCFile == true){
 				RW.writeFile(")");
 				if (assignFlag == false){
-					if(wrInFinallCfile == true)RW.writeFile(";");
+					if(wrInFinalCFile == true)RW.writeFile(";");
 					else TmpRw.writeFile(";");
 					assignFlag = false;
 				}
 			}
-			else {
-				TmpRw.writeFile(")");			
+			else if(wrInFinalCFile == false && callStatFlag==true ) {
+				TmpRw.writeFile(");\n");
+				callStatFlag = false;
 			}
+			else TmpRw.writeFile(")");		
 		}
 		lineNumberOfstrucktParam = 1;
     }
@@ -893,7 +1160,7 @@ condition
     :boolterm
     ('or'
     {
-        if(wrInFinallCfile==true)RW.writeFile(" or ");
+        if(wrInFinalCFile==true)RW.writeFile(" or ");
         else TmpRw.writeFile(" or ");
     }
     boolterm)*
@@ -902,7 +1169,7 @@ boolterm
     :boolfactor
     ('and'
     {
-        if(wrInFinallCfile==true)RW.writeFile(" and ");
+        if(wrInFinalCFile==true)RW.writeFile(" and ");
         else TmpRw.writeFile(" and ");
     }
     boolfactor)*
@@ -911,27 +1178,27 @@ boolterm
 boolfactor
     : 'not' '('
     {
-        if(wrInFinallCfile==true)RW.writeFile(" not (");
+        if(wrInFinalCFile==true)RW.writeFile(" not (");
         else TmpRw.writeFile(" not (");
     }
     condition ')'
     {
-        if(wrInFinallCfile==true)RW.writeFile(")");
+        if(wrInFinalCFile==true)RW.writeFile(")");
         else TmpRw.writeFile(")");        
     }
     | '('
     {
-        if(wrInFinallCfile==true)RW.writeFile("(");
+        if(wrInFinalCFile==true)RW.writeFile("(");
         else TmpRw.writeFile("(");        
     }
     condition ')'
     {
-        if(wrInFinallCfile==true)RW.writeFile(")");
+        if(wrInFinalCFile==true)RW.writeFile(")");
         else TmpRw.writeFile(")");        
     }
     | expression REL_OP
     {
-        if(wrInFinallCfile==true)RW.writeFile($REL_OP.text);
+        if(wrInFinalCFile==true)RW.writeFile($REL_OP.text);
         else TmpRw.writeFile($REL_OP.text);        
     }
     expression
@@ -943,17 +1210,19 @@ obj
         }
     '.'ID  
 		{
+			/* an klironomis dedomena tote des an erxese apo klironomikotita h oxi */
 			if(dontWriteInheritanceData == false){
-				if(wrInFinallCfile == true){
-					if(klironomikotita == false){
-						if (rmTabsCallstat == true)RW.writeFile(id+"->");
+				if(wrInFinalCFile == true){
+					if(klironomikotita == false){//oi sunartiseis init pou den einai se klironomikotita
+						if (rmTabsCallstat == true)RW.writeFile("self->"+id+"->");
 						else RW.writeFile("\t".repeat(tabCounter)+id+"->");
 						RW.writeFile($ID.text);
 					}
 					else {
+						/*we made this condition to check if every init function has inherited fields */
 						if ((classesFieldsMap.get(klironomikotitaName)).contains($ID.text)){
 							if((classesFieldsMap.get(klironomikotitaName)).size() == counterFileds){
-								RW.writeFile(klironomikotitaName+"_init(("+klironomikotitaName+"*)");
+								RW.writeFile("\t".repeat(tabCounter)+klironomikotitaName+"_init(("+klironomikotitaName+"*)");
 								ArrayList<String> values = new ArrayList<String>();
 								for (String value : classesFieldsMap.get(klironomikotitaName)){
 									values.add(value);
@@ -962,7 +1231,7 @@ obj
 							}
 						}
 						else {
-							RW.writeFile(id+"->");
+							RW.writeFile("\t".repeat(tabCounter)+id+"->");
 							RW.writeFile($ID.text);
 						}
 						counterFileds+=1;
@@ -979,22 +1248,6 @@ obj
         {
 			if(dontWriteInheritanceData == false){
 				id = $ID.text;
-				if(wrInFinallCfile == true){
-					for (String key : objectPointsClassNameMap.keySet()) {
-						if(objectPointsClassNameMap.get(key).contains($ID.text)){
-							if(rmTabsCallstat==false)RW.writeFile("\t".repeat(tabCounter)+key+"_");
-							else RW.writeFile(key+"_");
-						}
-					}
-				}
-				else {
-					for (String key : objectPointsClassNameMap.keySet()) {
-						if(objectPointsClassNameMap.get(key).contains($ID.text)){
-							if(rmTabsCallstat==false)TmpRw.writeFile("\t".repeat(tabCounter)+key+"_");
-							else TmpRw.writeFile(key+"_");
-						}
-					}
-				}
 			}
         }
 	'.'{rmTabsCallstat = true;}callStat{rmTabsCallstat = false;}
@@ -1003,7 +1256,7 @@ expression
     :optionalSign
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile==true)RW.writeFile($optionalSign.text);
+			if(wrInFinalCFile==true)RW.writeFile($optionalSign.text);
 			else TmpRw.writeFile($optionalSign.text);
 		}
     }
@@ -1011,7 +1264,7 @@ expression
     (ADD_OP
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile==true)RW.writeFile($ADD_OP.text);
+			if(wrInFinalCFile==true)RW.writeFile($ADD_OP.text);
 			else TmpRw.writeFile($ADD_OP.text); 
 		}
     }
@@ -1021,7 +1274,7 @@ term
     :factor (MUL_OP
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile==true)RW.writeFile($MUL_OP.text);
+			if(wrInFinalCFile==true)RW.writeFile($MUL_OP.text);
 			else TmpRw.writeFile($MUL_OP.text);
 		}
     }
@@ -1031,18 +1284,36 @@ factor
     :INT
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile==true)RW.writeFile($INT.text);
+			if(wrInFinalCFile==true)RW.writeFile($INT.text);
 			else TmpRw.writeFile($INT.text);
 			}
     }
     |ID
     {
 		if(dontWriteInheritanceData == false){
-			if(wrInFinallCfile==true)RW.writeFile($ID.text);
-			else TmpRw.writeFile($ID.text);
+			Boolean flag = false;
+			if(wrInFinalCFile==true){
+				for(String key:objectPointsClassNameMap.keySet()){
+					if(objectPointsClassNameMap.get(key).contains($ID.text)){
+						flag =true;
+						break;
+					}
+				}
+				if(flag == true)RW.writeFile(" &"+$ID.text);
+				else RW.writeFile($ID.text);
 			}
+			else {
+				for(String key:objectPointsClassNameMap.keySet()){
+					if(objectPointsClassNameMap.get(key).contains($ID.text)){
+						flag =true;
+						break;
+					}
+				}
+				if(flag == true)TmpRw.writeFile(" &"+$ID.text);
+				else TmpRw.writeFile($ID.text);
+			}
+		}
     }
-    // @TODO ID idtail
     |obj
     |'('expression')'
 ;
