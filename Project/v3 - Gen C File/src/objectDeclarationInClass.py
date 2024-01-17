@@ -1,3 +1,9 @@
+# This python file creates an object in a function from a class
+# and calls a function on that object
+# def printNumber(self)
+# 
+# Works well
+
 class Person:
 	def __init__(self, pid, born):
 		self.pid = pid

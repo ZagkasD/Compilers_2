@@ -288,9 +288,6 @@ grammar grammar_v3_2;
 		if(line.contains("printf")){
 			String[] printlist = line.split(",");
 			String out="\"";
-
-            System.out.println("line = "+line);
-
 			for(int i=0;i<printlist.length;i++){
 				if(printlist.length>1 && i<printlist.length-1)out+="%d, ";
 				else if(printlist.length == 1 || i == printlist.length-1)out+="%d ";
@@ -606,7 +603,7 @@ initFunction
         wrInFinalCFile = true;
 		counterFileds =2;
     }
-    (statements | 'pass')
+    statements
     {
         wrInFinalCFile = false;
         RW.writeFile("\n}\n");
@@ -715,6 +712,7 @@ statement
             System.exit(0);
         }
     }
+    | 'pass'
 ;
 /*
 A list of formal parameters
@@ -1327,10 +1325,8 @@ INT: [0-9]+ ('.' [0-9]+)?;
 REL_OP: '=='|'<='|'>='|'!='|'<'|'>';
 ADD_OP: '+'|'-';
 MUL_OP: '*'|'/';
-COMMENT: '"""' .*? '"""' ->channel(HIDDEN);
-// COMMENT
-//  : ( ' ' | '\t' )* '#' ( ~'\n' )* '\n'+
-//  | '#' ( ~'\n' )* // let NEWLINE handle \n unless char pos==0 for '#'
-//  ;
+BLOCK_COMMENT           : ('\'\'\'' .*? '\'\'\'' | '"""' .*? '"""') ->channel(HIDDEN);
+// match any line that starts with # and consumes all characters until the end of the line (~[\r\n]*).
+COMMENT                 : '#' ~[\r\n]* -> channel(HIDDEN);
 point: '.';
 WS: [ \r\n\t]+ -> skip;

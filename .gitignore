@@ -1,1 +1,4 @@
 Leactures/
+*.class
+*.tokens
+*.interp
