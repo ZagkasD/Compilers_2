@@ -62,6 +62,12 @@ void StupidPrint_init (StupidPrint *self, Employee *employee) {
 	printf ("%d \n",self->employee->department);
 
 }
+void  StupidPrint_printNumber (StupidPrint *self) {
+	Employee	kostas;
+	Employee_init(&kostas, 11111,2000,2047101311,0000);
+	printf ("%d \n",Employee_getPid(&kostas  ));
+
+}
 int main(){
 	Person	george;
 	Person_init(&george, 200223,2002);
@@ -80,4 +86,5 @@ Employee_setDepartment(&peter, 2);
 	printf ("%d \n",Employee_getPid(&peter  ));
 	StupidPrint	stupid;
 	StupidPrint_init(&stupid  ,&peter);
+StupidPrint_printNumber(&stupid  );
 }
