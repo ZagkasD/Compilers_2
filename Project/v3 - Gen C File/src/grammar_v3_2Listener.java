@@ -10,6 +10,8 @@
     import java.util.Scanner;
 	import java.io.RandomAccessFile;
 	import java.util.*;
+    import java.util.regex.Matcher;
+    import java.util.regex.Pattern;
 
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -298,14 +300,4 @@ public interface grammar_v3_2Listener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitOptionalSign(grammar_v3_2Parser.OptionalSignContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link grammar_v3_2Parser#point}.
-	 * @param ctx the parse tree
-	 */
-	void enterPoint(grammar_v3_2Parser.PointContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link grammar_v3_2Parser#point}.
-	 * @param ctx the parse tree
-	 */
-	void exitPoint(grammar_v3_2Parser.PointContext ctx);
 }

@@ -5,25 +5,25 @@ typedef struct{
 	int born;
 }Person;
 void Person_init (Person *self,int pid,int born) {
-	self->pid = pid;
-	self->born = born;
+		self->pid = pid;
+		self->born = born;
 
 }
 int  Person_getPid (Person *self) {
-	return self->pid;
+		return self->pid;
 
 }
 int  Person_getBorn (Person *self) {
-	return self->born;
+		return self->born;
 
 }
 int  Person_millenium (Person *self) {
-	if (self->born<2000){
-		return 1;
-	}
-	else {
-		return 2;
-	}
+		if (self->born<2000){
+			return 1;
+		}
+		else {
+			return 2;
+		}
 
 }
 
@@ -33,21 +33,21 @@ typedef struct{
 	int department;
 }Employee;
 void Employee_init (Employee *self,int pid,int born,int afm,int department) {
-	Person_init((Person*)self, pid, born);
-	self->afm = afm;
-	self->department = department;
+		Person_init((Person*)self, pid, born);
+		self->afm = afm;
+		self->department = department;
 
 }
 int  Employee_getDepartment (Employee *self) {
-	return self->department;
+		return self->department;
 
 }
 void  Employee_setDepartment (Employee *self,int department) {
-	self->department = department;
+		self->department = department;
 
 }
 int  Employee_getPid (Employee *self) {
-	return self->afm;
+		return self->afm;
 
 }
 
@@ -56,16 +56,10 @@ typedef struct{
 }StupidPrint;
 void StupidPrint_init (StupidPrint *self, Employee *employee) {
 	self->employee = employee;
-	printf ("%d \n",self->employee->base.pid);
-	printf ("%d \n",self->employee->base.born);
-	printf ("%d \n",self->employee->afm);
-	printf ("%d \n",self->employee->department);
-
-}
-void  StupidPrint_printNumber (StupidPrint *self) {
-	Employee	kostas;
-	Employee_init(&kostas, 11111,2000,2047101311,0000);
-	printf ("%d \n",Employee_getPid(&kostas  ));
+		printf ("%d \n",self->employee->base.pid);
+		printf ("%d \n",self->employee->base.born);
+		printf ("%d \n",self->employee->afm);
+		printf ("%d \n",self->employee->department);
 
 }
 int main(){
@@ -86,5 +80,5 @@ Employee_setDepartment(&peter, 2);
 	printf ("%d \n",Employee_getPid(&peter  ));
 	StupidPrint	stupid;
 	StupidPrint_init(&stupid  ,&peter);
-StupidPrint_printNumber(&stupid  );
+	return 0;
 }
