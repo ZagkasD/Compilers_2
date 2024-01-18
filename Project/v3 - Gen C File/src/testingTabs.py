@@ -1,22 +1,16 @@
-# This python file creates an object in a function from a class
-# and calls a function on that object
-# def printNumber(self)
-# 
-# Works well
-
 class Person:
 	def __init__(self, pid, born):
-		self.pid = pid
-		self.born = born
-	def getPid(self):
-		return self.pid
-	def getBorn(self):
-		return self.born
-	def millenium(self):
-		if self.born < 2000:
-			return 1
-		else:
-			return 2
+        self.pid = pid
+        self.born = born
+    def getPid(self):
+        return self.pid
+    def getBorn(self):
+        return self.born
+    def millenium(self):
+        if self.born < 2000:
+            return 1
+        else:
+            return 2
 	
 class Employee(Person):
 	def __init__(self, pid, born, afm, department):
@@ -37,9 +31,6 @@ class StupidPrint:
 		print(employee.born)
 		print(employee.afm)
 		print(employee.department)
-	def printNumber(self):
-		kostas = Employee(11111,2000, 2047101311, 0000)
-		print(kostas.getPid())
 
 if __name__ == '__main__':
 	george = Person(200223, 2002)
@@ -55,4 +46,3 @@ if __name__ == '__main__':
 	print(george.getPid())
 	print(peter.getPid())
 	stupid = StupidPrint(peter)
-	stupid.printNumber()

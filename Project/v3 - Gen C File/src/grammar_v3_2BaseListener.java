@@ -10,6 +10,8 @@
     import java.util.Scanner;
 	import java.io.RandomAccessFile;
 	import java.util.*;
+    import java.util.regex.Matcher;
+    import java.util.regex.Pattern;
 
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -359,18 +361,6 @@ public class grammar_v3_2BaseListener implements grammar_v3_2Listener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitOptionalSign(grammar_v3_2Parser.OptionalSignContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterPoint(grammar_v3_2Parser.PointContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitPoint(grammar_v3_2Parser.PointContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

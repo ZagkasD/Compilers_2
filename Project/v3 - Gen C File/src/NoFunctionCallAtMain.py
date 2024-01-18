@@ -1,3 +1,10 @@
+"""
+In this example, the __init__ function of class StupidPrint isn't used at main.
+Which means when the compiler goes back to the temp file to fix the type of the parameters to the correct ones
+it won't have a type to add to the employee parameter of the __init__ function
+and it will leave it as int, the basic type.
+"""
+
 class Person:
 	def __init__(self, pid, born):
 		self.pid = pid
@@ -45,4 +52,4 @@ if __name__ == '__main__':
 	print(peter.getDepartment())
 	print(george.getPid())
 	print(peter.getPid())
-	stupid = StupidPrint(peter)
+	# stupid = StupidPrint(peter)

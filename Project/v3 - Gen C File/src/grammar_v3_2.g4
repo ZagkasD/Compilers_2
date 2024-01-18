@@ -2,7 +2,7 @@
 In v3_x we are working on the output file in c
 */
 
-// Today's work: fix duplicate classes/parameters/variables and continue the report
+// TODO fix x=5 in main
 
 grammar grammar_v3_2;
 @header{
@@ -16,33 +16,44 @@ grammar grammar_v3_2;
     import java.util.Scanner;
 	import java.io.RandomAccessFile;
 	import java.util.*;
+    import java.util.regex.Matcher;
+    import java.util.regex.Pattern;
 }
 @parser::members {
 
     // Change this to the directory where the output file will go
     String dirPath = "C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src\\";
     // Change this to the directory where your python input is
-    String pythonInput = "pythonBasicInput.py";
+    String pythonInput = "testingTabs.py";
 
 
     ArrayList <Scope> scopes_list = new ArrayList<Scope>();
     // List for storing class names
     ArrayList <String> classesList = new ArrayList <String>();
-    addEntity entity;
+    AddEntity entity;
     WriteToFile RW;
     WriteToFile TmpRw;
-    String tempNameClass,line,tempAssignment,klironomikotitaName,id,checkIdForParmObj,classNameForDowncasting;
-    Boolean wrInFinalCFile,klironomikotita=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false,callStatFlag=false;
+    String tempNameClass,line,tempAssignment,inheritedClass,id,checkIdForParmObj,classNameForDowncasting;
+    Boolean wrInFinalCFile,inheritance=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false,callStatFlag=false;
     // Raise assignFlag in assignmentStat before callStat|expression and lower it after them
-    int returnFlag,tabCounter = 0,counterFileds=2,lineCounter = 1,lineNumberOfstrucktParam=1;
-    File pyFile;
+    int returnFlag,tabCounter = 0,counterForFields=2,lineCounter = 1,lineNumberOfstrucktParam=1;
     Scanner myReader;
 	ArrayList<String> tempList,tempFuncName;
-	HashMap<String, ArrayList<String>>  classesAndFunctions= new HashMap<String, ArrayList<String>>();
-	HashMap<String, ArrayList<Integer>> lineOfClassStruct = new HashMap<String, ArrayList<Integer>>();
-	HashMap<String, ArrayList<String>> classesFieldsMap = new HashMap<String, ArrayList<String>>();
-	HashMap<String, ArrayList<String>> objectPointsClassNameMap = new HashMap<String, ArrayList<String>>();
-	HashMap<String, String> childAndParent = new HashMap<String, String>();
+
+    // classesAndFunctionsMap contains the names of classes as keys and a list of their functions as values
+	HashMap<String, ArrayList<String>>  classesAndFunctionsMap = new HashMap<String, ArrayList<String>>();
+
+    // classesStructsAndLinesMap contains the names of classes as keys and a list of the lines where their struct begins and ends
+	HashMap<String, ArrayList<Integer>> classesStructsAndLinesMap = new HashMap<String, ArrayList<Integer>>();
+
+    // classesAndFieldsMap contains the names of classes as keys and a list of their fields as values
+	HashMap<String, ArrayList<String>> classesAndFieldsMap = new HashMap<String, ArrayList<String>>();
+
+    // classesAndObjectsmap contains the names of the classes as keys and a list of the objects of that type of class, as values
+	HashMap<String, ArrayList<String>> classesAndObjectsMap = new HashMap<String, ArrayList<String>>();
+
+    // childAndParentMap contains the names of the classes that inherent a class as keys and the names of the classes that get inherited, as values
+	HashMap<String, String> childAndParentMap = new HashMap<String, String>();
 
     public class Scope{
         private ArrayList <Entity> entities_list = new ArrayList<Entity>();
@@ -100,6 +111,7 @@ grammar grammar_v3_2;
     // ===========================================================
     // SYMBOL TABLE FUNCTIONS
     // ===========================================================
+
     // Add new scope to scopes_list
     public class AddScope{
         public void add_new_scope(){
@@ -121,27 +133,34 @@ grammar grammar_v3_2;
             scopes_list.remove(last_scope);
         }
     }
-    public class addEntity{
+
+    // Add new entity to scopes_list
+    public class AddEntity{
         public void add_new_function(String name){
             Function fun = new Function(name);
             scopes_list.get(scopes_list.size()-1).getEntitiesList().add(fun);    
         }
+        
         public void add_parameter(String param){
+            
             //go to the last entity of the last scope and add the parameters
             FormalParameter objParam = new FormalParameter(param);
             ArrayList <Entity> entities_list = scopes_list.get(scopes_list.size()-1).getEntitiesList();
+
             // Important. Downcast the return object of the entities_list, because it stores Entity type objects
             Function fun = (Function) entities_list.get(entities_list.size()-1);
             checkUniqueParameter(objParam, fun);
         }
+
         public void add_variable(String name){
             Variable objVar = new Variable(name);
             int nesting_level = (scopes_list.get(scopes_list.size() - 1)).getNestingLevel();
-            // Check for variable that already exist
+            // Check if variable already exist
             for (Entity ent : scopes_list.get(nesting_level).getEntitiesList()){
                 if(ent.getName() == name){
-                    // TODO fix this
-                    System.out.println("Error, bro same name wtf!!!");
+                    System.err.println("Error: Variable name '" + ent.getName() + "' already used");
+                    System.exit(1);    
+
                 }
                 else scopes_list.get(scopes_list.size()-1).getEntitiesList().add(objVar);
             }
@@ -238,17 +257,31 @@ grammar grammar_v3_2;
             }
         }
     }
-    public int ReturnTotalNumberOftabs(String line){
+
+    // Given a line, it counts the number of tabs it has and returns their number.
+    // It also skips all empty lines and newlines
+    // Big mistake here, it always returns -1
+    public int returnTotalNumberOfTabs(String line){
         int total = 0;
         if (!(line.startsWith("class"))){
             while (myReader.hasNextLine()){
+                // System.out.println("line at while ="+line);
+                // Skip empty lines and newlines
                 if (line.isEmpty() || line.trim().equals("") || line.trim().equals("\n")) {
                     line = myReader.nextLine();
                 }
                 else {  
+                    // System.out.println("line at else ="+line);
+                    // Big mistake here
                     return -1;
+                    // break;
                 }
             }
+            // Count the tabs on that line
+            // System.out.println("line at else ="+line);
+            // System.out.println("line length ="+line.length());
+            // This is bad, tabs are always at the beginning
+            // why go through the whole line, char by char?
             for (int i = 0; i < line.length(); i++) {
                 char ch = line.charAt(i);
                 if (ch == ' ' || ch == '\t') {
@@ -259,6 +292,75 @@ grammar grammar_v3_2;
         }
         return total;
     }
+
+    // public int countLeadingWhitespace(String text) {
+    //     if (text == null) {
+    //         throw new IllegalArgumentException("Input text cannot be null.");
+    // }
+
+    //     // Split the text into lines
+    //     String[] lines = text.split("\n");
+
+    //     for (String line : lines) {
+    //         // Skip lines that start with "class" or are empty/whitespace only
+    //         if (!line.startsWith("class") && !line.trim().isEmpty()) {
+    //             // Use a regex to find leading whitespace (tabs and spaces)
+    //             Matcher matcher = Pattern.compile("^\\s+").matcher(line);
+    //             if (matcher.find()) {
+    //                 return matcher.group().length(); // Return the length of the leading whitespace
+    //             }
+    //             break; // Exit loop after processing the first non-empty, non-class line
+    //         }
+    //     }
+    //     return 0; // Return 0 if no suitable line is found
+    // }
+
+    // public int countLeadingWhitespace(String line) {
+    //     if (line == null) {
+    //         throw new IllegalArgumentException("Input line cannot be null.");
+    //     }
+
+    //     int tabEquivalentCount = 0;
+    //     int consecutiveSpaces = 0;
+    //     int spacesPerTab = 4; // Number of spaces equivalent to one tab
+
+    //     // Skip lines that start with "class" or are empty/whitespace only
+    //     if (!line.startsWith("class") && !line.trim().isEmpty()) {
+    //         for (int i = 0; i < line.length(); i++) {
+    //             char ch = line.charAt(i);
+    //             System.out.println("char ="+ch+"wtf");
+    //             if (ch == '\t') {
+    //                 consecutiveSpaces++;
+    //                 System.out.println("consecutiveSpaces ="+consecutiveSpaces);
+    //                 if (consecutiveSpaces == spacesPerTab) {
+    //                     tabEquivalentCount++;
+    //                     consecutiveSpaces = 0; // Reset the consecutive space count
+    //                 }
+    //             } else {
+    //                 break; // Stop counting when a non-space character is encountered
+    //             }
+    //         }
+    //     }
+
+    //     return tabEquivalentCount; // Return the count of space groups equivalent to tabs
+    // }
+
+    public int countLeadingWhitespace(String line) {
+        if (line == null) {
+            throw new IllegalArgumentException("Input line cannot be null.");
+        }
+        // Skip lines that start with "class" or are empty/whitespace only
+        if (!line.startsWith("class") && !line.trim().isEmpty()) {
+            Matcher matcher = Pattern.compile("^\\s+").matcher(line);
+            if (matcher.find()) {
+                return matcher.group().length(); // Return the length of the leading whitespace
+            }
+        }
+        return 0; // Return 0 if no leading whitespace or line is not valid
+    }
+
+
+
 	public String placeObject(StringBuilder content,BufferedReader reader,String line,String key,String str,String[] templine ){
 		String templ="",str2 = "";
 		for(int i=0;i<templine.length;i++){
@@ -271,17 +373,16 @@ grammar grammar_v3_2;
 		line = templ;
 		content.append(line).append(System.lineSeparator());
 		line = str2;	
-		//we use this condition to make sure the declarationof the objects in the function will not be changed
-		//for(int i=0;i<classesFieldsMap.get(checkIdForParmObj).size()-1;i++){
+
 		try{
 			if(templine.length == 1){
-				content.append(line).append(System.lineSeparator());//we append every line in the file
+                // We append every line in the file
+				content.append(line).append(System.lineSeparator()); 
 				line = reader.readLine();
 			}
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
-		//}
 		return line;
 	}
 	public String outputPrintf(String line){
@@ -302,8 +403,8 @@ grammar grammar_v3_2;
 		// check if the parameter is not a number
 		if(!(paraitem.matches("-?\\d+(\\.\\d+)?"))){
 			//take all class names from hashmap to return their obj to check if parameter is an object or not 
-			for (String key : objectPointsClassNameMap.keySet()) {
-				if(objectPointsClassNameMap.get(key).contains(paraitem)){
+			for (String key : classesAndObjectsMap.keySet()) {
+				if(classesAndObjectsMap.get(key).contains(paraitem)){
 					try {
 						// Read the content of the file
 						BufferedReader reader = new BufferedReader(new FileReader(dirPath+"outputFile.c"));
@@ -315,17 +416,17 @@ grammar grammar_v3_2;
 						HashMap<String, ArrayList<String>> structInfoMap = new HashMap<String, ArrayList<String>>();
 						ArrayList<String> structlist = new  ArrayList<String>();
 						Boolean fl = false,f=false;
-						Set<String> keys = lineOfClassStruct.keySet();
+						Set<String> keys = classesStructsAndLinesMap.keySet();
 						List<String> keyList = List.copyOf(keys);
-						Set<String> Classeskeys = classesAndFunctions.keySet();
+						Set<String> Classeskeys = classesAndFunctionsMap.keySet();
 						List<String> ClasseskeysList = List.copyOf(keys);
 						int step = keyList.size()-1;
 						int paramCounter = 1;//not init
 						while ((line = reader.readLine()) != null) 
 						{
-							if (lineOfClassStruct != null && checkIdForParmObj != null)
+							if (classesStructsAndLinesMap != null && checkIdForParmObj != null)
 							{
-								if(currentLineNumber == lineOfClassStruct.get(keyList.get(step)).get(1) && step>0){
+								if(currentLineNumber == classesStructsAndLinesMap.get(keyList.get(step)).get(1) && step>0){
 									structInfoMap.put((line.replace("}","")).replace(";",""),structlist);
 									fl = false;
 									step-=1;
@@ -339,7 +440,7 @@ grammar grammar_v3_2;
 									fl = true;
 								}
 								// we use this condition to check if we are in the proper struct 
-								if (ClasseskeysList.contains(checkIdForParmObj) && currentLineNumber == lineOfClassStruct.get(checkIdForParmObj).get(0) && lineNumberOfstrucktParam>0){
+								if (ClasseskeysList.contains(checkIdForParmObj) && currentLineNumber == classesStructsAndLinesMap.get(checkIdForParmObj).get(0) && lineNumberOfstrucktParam>0){
 									//we use this loop to find and put the proper declaration into our variable 
 									//actually with this loop we move our pointer into the proper line which is the lineNumberOfstrucktParam
 									//which we have taken from main were the function was called 
@@ -378,12 +479,13 @@ grammar grammar_v3_2;
 								}
 								if(line.contains("}"))f=false;
 							}
-							// this condition checks if tere is a keyword base for inheritance
+                            
+                            // Check if there is the keyword "base", for inheritance
 							if(!(structInfoMap.isEmpty()) && f == true){
 								for(String parameter: structInfoMap.get(key)){
 									if(line.contains(parameter))continue;
 									else{
-										String mamaClass = childAndParent.get(key);
+										String mamaClass = childAndParentMap.get(key);
 										for(String mamaparameter:structInfoMap.get(mamaClass)){
 											if(line.contains(mamaparameter))line = line.replace(mamaparameter,"base."+mamaparameter);
 											else continue;
@@ -415,7 +517,7 @@ prog
 ;
 classes
     : {
-        pyFile = new File(pythonInput);
+        File pyFile = new File(pythonInput);
         try{
             myReader = new Scanner(pyFile);
         }catch (IOException e) {
@@ -442,15 +544,23 @@ class
         }
         
         line = myReader.nextLine();
-        int temp = ReturnTotalNumberOftabs(line) ;
-        if(temp != -1 && temp!=tabCounter)
-        {
-            System.out.println("Check your tabs in the begining of your class");
-            System.exit(0);
+
+        System.out.println("line ="+line);
+
+        // This temp will be 0 
+        // int temp = returnTotalNumberOfTabs(line) ;
+        
+        int temp = countLeadingWhitespace(line);
+
+        // if(temp != -1 && temp!=tabCounter)
+        if(temp!=tabCounter){
+            System.err.println("IndentationError");
+            System.exit(1);    
+
         }
         AddScope scope = new AddScope();
         scope.add_new_scope();
-        entity = new addEntity();
+        entity = new AddEntity();
         tempNameClass = $ID.text;
         RW.writeFile("\ntypedef struct{ \n");
     }
@@ -473,23 +583,24 @@ class
         }
 
         line = myReader.nextLine();
-        int temp = ReturnTotalNumberOftabs(line) ;
+        int temp = returnTotalNumberOfTabs(line) ;
         if( temp != -1 && temp!=tabCounter)
         {
             System.out.println("Check your tabs in the begining of your class");
             System.exit(0);
         }
         tempNameClass = $ID.text;
-    } '('ID { klironomikotitaName = $ID.text;}')' ':'
+    } '('ID { inheritedClass = $ID.text;}')' ':'
     {  
-		klironomikotita = true;
+        childAndParentMap.put(tempNameClass,inheritedClass);
+		inheritance = true;
         AddScope scope = new AddScope();
         scope.add_new_scope();
         RW.writeFile("\ntypedef struct{ \n");
     }
     initFunction  functions
     {
-		klironomikotita = false;
+		inheritance = false;
         scope.remove_scope();
     }
 ;
@@ -516,7 +627,7 @@ main:
 					ArrayList<Integer> templ = new ArrayList<Integer>();
 					templ.add(tempCountLine);
 					templ.add(lineCounter);
-					lineOfClassStruct.put((line.split("}")[1].trim()).split(";")[0],templ);
+					classesStructsAndLinesMap.put((line.split("}")[1].trim()).split(";")[0],templ);
 					structFlag = false;
 				}
 				lineCounter+=1;
@@ -537,6 +648,7 @@ main:
         // Delete temp c file after merging with main output C file
         TmpRw.deleteFile();
         
+        RW.writeFile("\treturn 0;\n");
         RW.writeFile("}\n");
         RW.closeFile();
 		temp = new File(dirPath+"outputFile.c");
@@ -562,9 +674,24 @@ initFunction
     :'def''__init__'
     {
         tabCounter +=1;
+        
+        // System.out.println("tabCounter at initFunction ="+tabCounter);
+        
         line = myReader.nextLine();
-        int temp = ReturnTotalNumberOftabs(line) ;
-        if(temp != -1 && temp!=tabCounter)
+        
+        // System.out.println("line at initFunction ="+line);
+        
+        //int temp = returnTotalNumberOfTabs(line) ;
+
+        int temp = countLeadingWhitespace(line);
+
+        // System.out.println("tabs at initFunction ="+temp);
+
+        // Big mistake here
+        // temp is always -1 because of returnTotalNumberOfTabs
+        // so this condition is always false
+        // if(temp != -1 && temp!=tabCounter)
+        if(temp!=tabCounter)
         {
             System.out.println("Check your tabs near line: "+line);
             System.exit(0);
@@ -576,22 +703,25 @@ initFunction
         AddScope scope = new AddScope();
         scope.add_new_scope();
         ArrayList <Entity> entities_list = scopes_list.get(scopes_list.size()-2).getEntitiesList();
+
+        // Function fun is the last function in the entiies_list
         Function fun = (Function) entities_list.get(entities_list.size()-1);
-        //we use this to fill the struct
-		if(klironomikotita == true){
-			childAndParent.put(tempNameClass,klironomikotitaName);
-			RW.writeFile("\t".repeat(tabCounter)+klironomikotitaName+" base;\n");
+
+        // Fill in the struct
+		if(inheritance == true){
+			RW.writeFile("\t".repeat(tabCounter)+inheritedClass+" base;\n");
 		}
 		tempList = new ArrayList<String>();
+        
         for(int i=0;i<fun.getFormalParList().size();i++){
 			tempList.add(fun.getFormalParList().get(i).getName());
-			classesFieldsMap.put(tempNameClass,tempList);
-			if(i>0 && klironomikotita == true){
-				if (!((classesFieldsMap.get(klironomikotitaName)).contains(fun.getFormalParList().get(i).getName()))){
+			classesAndFieldsMap.put(tempNameClass,tempList);
+			if(i>0 && inheritance == true){
+				if (!((classesAndFieldsMap.get(inheritedClass)).contains(fun.getFormalParList().get(i).getName()))){
 					RW.writeFile("\t".repeat(tabCounter)+"int "+fun.getFormalParList().get(i).getName()+";\n");
 				}
 			}
-            else if(i>0 && klironomikotita == false) RW.writeFile("\t".repeat(tabCounter)+"int "+fun.getFormalParList().get(i).getName()+";\n");
+            else if(i>0 && inheritance == false) RW.writeFile("\t".repeat(tabCounter)+"int "+fun.getFormalParList().get(i).getName()+";\n");
         }
         RW.writeFile("}"+tempNameClass+";\n");
         //for the parameters
@@ -601,7 +731,7 @@ initFunction
         }
         RW.writeFile(") {\n");
         wrInFinalCFile = true;
-		counterFileds =2;
+		counterForFields =2;
     }
     statements
     {
@@ -619,10 +749,10 @@ function
     :'def' ID
     {
 		tempFuncName.add($ID.text);
-		classesAndFunctions.put(tempNameClass,tempFuncName);
+		classesAndFunctionsMap.put(tempNameClass,tempFuncName);
         tabCounter +=1;
         line = myReader.nextLine();
-        int temp = ReturnTotalNumberOftabs(line) ;
+        int temp = returnTotalNumberOfTabs(line) ;
         if(temp != -1 && temp!=tabCounter)
         {
             System.out.println("Check your tabs near line: "+line);
@@ -652,6 +782,8 @@ function
     }
     (statements | 'pass')
     {
+        // TODO fix this return
+        // c needs return 0 always, no matter if there is an else
         if (elseFlag == false){
             TmpRw.writeFile("\t".repeat(tabCounter)+"return 0;\n");
             elseFlag = true;
@@ -673,7 +805,7 @@ statement
     :assignmentStat
     {
         line = myReader.nextLine();
-        int temp = ReturnTotalNumberOftabs(line) ;
+        int temp = returnTotalNumberOfTabs(line) ;
         if(temp != -1 && temp!=tabCounter+1)
         {
             System.out.println("Check your tabs near line: "+line);
@@ -685,7 +817,7 @@ statement
     |printStat
     {
         line = myReader.nextLine();
-        int temp = ReturnTotalNumberOftabs(line) ;
+        int temp = returnTotalNumberOfTabs(line) ;
         if(temp != -1 && temp!=tabCounter+1)
         {
             System.out.println("Check your tabs near line: "+line);
@@ -695,7 +827,7 @@ statement
     |returnStat
     {
         line = myReader.nextLine();
-        int temp = ReturnTotalNumberOftabs(line) ;
+        int temp = returnTotalNumberOfTabs(line) ;
         if(temp != -1 && temp!=tabCounter+1)
         {
             System.out.println("Check your tabs near line: "+line);
@@ -705,7 +837,7 @@ statement
     |{callStatFlag = true;}callStat
     {
         line = myReader.nextLine();
-        int temp = ReturnTotalNumberOftabs(line) ;
+        int temp = returnTotalNumberOfTabs(line) ;
         if(temp != -1 && temp!=tabCounter+1)
         {
             System.out.println("Check your tabs near line: "+line);
@@ -721,25 +853,11 @@ the x would be a formal parameter item
 */
 formalparlist
     :
-    {
-        // List for storing formal parameters
-        //ArrayList <String> formalParameterList = new ArrayList <String>();
-    }
     formalparitem (','formalparitem)*
 ;
 formalparitem
     :ID
     {
-        // Check for already used parameter name
-        // String parameterName = $ID.text;
-        // if (!formalParameterList.contains(parameterName)){
-        //     formalParameterList.add(parameterName);
-        // }
-        // else if (formalParameterList.contains(parameterName)){
-        //     System.err.println("Error: Parameter name '" + parameterName + "' already used");
-        //     System.exit(1);    
-        // }
-
         entity.add_parameter($ID.text);
     }
     |obj
@@ -759,8 +877,6 @@ when it has to throw an error
 actualparlist
     :actualparitem
     {
-		//if(!($actualparitem.text.isEmpty()) && assignFlag == true) auto den leitourgei stin periptosh tou komatos stin Employee_setDepartment(&peter,2)
-		// alla stin katw sinthiki an kalesoume mi sinartisi apeythias mporei na valei koma ekei poy den theloume
         if(!($actualparitem.text.isEmpty())){
 			objectParam($actualparitem.text);
             if(wrInFinalCFile==true){
@@ -808,12 +924,15 @@ assignmentStat
                     In callStat, write the two lines in C format, for the declaration and the
                     initialization
                 */
-                 tempAssignment =("\t".repeat(tabCounter)+$ID.text+" = ");
+                tempAssignment =("\t".repeat(tabCounter)+$ID.text+" = ");
+                // TODO fix x=5 in main
+                //TmpRw.writeFile("\t".repeat(tabCounter)+$ID.text+" = ");
+
             }
         )
         |obj{
-			if(klironomikotita == true){
-				if(counterFileds-1 > classesFieldsMap.get(klironomikotitaName).size()){
+			if(inheritance == true){
+				if(counterForFields-1 > classesAndFieldsMap.get(inheritedClass).size()){
 					if (wrInFinalCFile == true)RW.writeFile(" = ");
 					// Also store the equal sign. Will remove it later if in callStat
 					else TmpRw.writeFile(" = ");
@@ -831,8 +950,8 @@ assignmentStat
     // expression or callStat for e.g.  george = Person(200223, 2002)
     '=' {assignFlag = true;}(callStat | expression){dontWriteInheritanceData = false;assignFlag = false;}
     {
-		if(klironomikotita == true){
-			if(counterFileds-1 > classesFieldsMap.get(klironomikotitaName).size()){
+		if(inheritance == true){
+			if(counterForFields-1 > classesAndFieldsMap.get(inheritedClass).size()){
 				if (wrInFinalCFile == true) RW.writeFile(";\n");
 				else TmpRw.writeFile(";\n");
 			}
@@ -850,7 +969,7 @@ ifStat
     :'if'
         {
             line = myReader.nextLine();
-            int temp = ReturnTotalNumberOftabs(line) ;
+            int temp = returnTotalNumberOfTabs(line) ;
             if(temp != -1 && temp!=tabCounter+1)
             {
                 System.out.println("Check your tabs near line: "+line);
@@ -879,7 +998,7 @@ ifStat
     |'if' '('
     {
         line = myReader.nextLine();
-        int temp = ReturnTotalNumberOftabs(line) ;
+        int temp = returnTotalNumberOfTabs(line) ;
         if(temp != -1 && temp!=tabCounter+1)
         {
             System.out.println("Check your tabs near line: "+line);
@@ -909,7 +1028,7 @@ elsepart
     :'else'':'
     {
         line = myReader.nextLine();
-        int temp = ReturnTotalNumberOftabs(line) ;
+        int temp = returnTotalNumberOfTabs(line) ;
         if(temp != -1 && temp!=tabCounter+1)
         {
             System.out.println("Check your tabs near line: "+line);
@@ -1016,6 +1135,8 @@ returnStat
             returnFlag = 1;
         }
 ;
+
+// This rule is called whenever a function is called in python
 callStat
     :obj |
     (ID
@@ -1025,14 +1146,16 @@ callStat
 			if(assignFlag == true){
 				/*
 					Only keep the tabs and the name of the ID, without the "="
-					Write in file: Person george
+					Write in C file: "Person george" when you see "george = Person (...)"
 					The declaration of the object george of type Person
 				*/
 				String[]temp = tempAssignment.split(" =");
-				if(!(objectPointsClassNameMap.containsKey($ID.text))){
-					objectPointsClassNameMap.put($ID.text,new ArrayList<>());
+				if(!(classesAndObjectsMap.containsKey($ID.text))){
+					classesAndObjectsMap.put($ID.text,new ArrayList<>());
 				}
-				objectPointsClassNameMap.get($ID.text).add(temp[0].trim());
+
+                // Store "george" in the list of values for the proper class
+				classesAndObjectsMap.get($ID.text).add(temp[0].trim());
 				if(wrInFinalCFile==true){
 					RW.writeFile("\t".repeat(tabCounter)+$ID.text+temp[0]+";\n");
 					RW.writeFile("\t".repeat(tabCounter)+$ID.text+"_init");
@@ -1043,12 +1166,12 @@ callStat
 					}
 			}
 			else{
-				for(String className: objectPointsClassNameMap.keySet()){
+				for(String className: classesAndObjectsMap.keySet()){
                     // Check what type of class is the object id
-					if(objectPointsClassNameMap.get(className).contains(id)){
+					if(classesAndObjectsMap.get(className).contains(id)){
                         
                         // Check what class is the function from
-                        if(classesAndFunctions.get(className).contains($ID.text)){
+                        if(classesAndFunctionsMap.get(className).contains($ID.text)){
                             // Set this to not do downcasting, since the function is in this class
                             classNameForDowncasting = className;
                             if(wrInFinalCFile==true){
@@ -1065,8 +1188,8 @@ callStat
                         // This is where downcasting is needed for when a parent class calls a function of a child class on an
                         // object that has the parent class type
                         else {
-                            for(String className2: classesAndFunctions.keySet()){
-                                if(classesAndFunctions.get(className2).contains($ID.text)){
+                            for(String className2: classesAndFunctionsMap.keySet()){
+                                if(classesAndFunctionsMap.get(className2).contains($ID.text)){
                                     classNameForDowncasting = className2;
                                     if(wrInFinalCFile==true){
                                         if(rmTabsCallstat == true)RW.writeFile(className2+"_"+$ID.text);
@@ -1093,7 +1216,7 @@ callStat
         through the grammar.
         In our case, the $george, will be added by hand, in a java action, so the grammar
         won't do it.
-        Solution: TODO fix the comma
+        Solution: TODO explanation
     */
     '('
     {
@@ -1111,8 +1234,8 @@ callStat
 					}
 			}
 			else{
-				for(String key:objectPointsClassNameMap.keySet()){
-					if(objectPointsClassNameMap.get(key).contains(id)&& !(classNameForDowncasting.equals(key))){
+				for(String key:classesAndObjectsMap.keySet()){
+					if(classesAndObjectsMap.get(key).contains(id)&& !(classNameForDowncasting.equals(key))){
 						if(wrInFinalCFile==true){
 							RW.writeFile("("+classNameForDowncasting+" *)&"+id+"  ");
 						}
@@ -1208,21 +1331,22 @@ obj
         }
     '.'ID  
 		{
-			/* an klironomis dedomena tote des an erxese apo klironomikotita h oxi */
+            // If there is an inheritance of data, then check if the class has inheritance
 			if(dontWriteInheritanceData == false){
 				if(wrInFinalCFile == true){
-					if(klironomikotita == false){//oi sunartiseis init pou den einai se klironomikotita
+                    // For init functions that don't inherent
+					if(inheritance == false){
 						if (rmTabsCallstat == true)RW.writeFile("self->"+id+"->");
 						else RW.writeFile("\t".repeat(tabCounter)+id+"->");
 						RW.writeFile($ID.text);
 					}
 					else {
-						/*we made this condition to check if every init function has inherited fields */
-						if ((classesFieldsMap.get(klironomikotitaName)).contains($ID.text)){
-							if((classesFieldsMap.get(klironomikotitaName)).size() == counterFileds){
-								RW.writeFile("\t".repeat(tabCounter)+klironomikotitaName+"_init(("+klironomikotitaName+"*)");
+                        // Check if every init function has inherited fields
+						if ((classesAndFieldsMap.get(inheritedClass)).contains($ID.text)){
+							if((classesAndFieldsMap.get(inheritedClass)).size() == counterForFields){
+								RW.writeFile("\t".repeat(tabCounter)+inheritedClass+"_init(("+inheritedClass+"*)");
 								ArrayList<String> values = new ArrayList<String>();
-								for (String value : classesFieldsMap.get(klironomikotitaName)){
+								for (String value : classesAndFieldsMap.get(inheritedClass)){
 									values.add(value);
 								}
 								RW.writeFile(String.join(", ", values)+");\n");
@@ -1232,7 +1356,7 @@ obj
 							RW.writeFile("\t".repeat(tabCounter)+id+"->");
 							RW.writeFile($ID.text);
 						}
-						counterFileds+=1;
+						counterForFields+=1;
 					}
 				}
 				else {
@@ -1291,8 +1415,8 @@ factor
 		if(dontWriteInheritanceData == false){
 			Boolean flag = false;
 			if(wrInFinalCFile==true){
-				for(String key:objectPointsClassNameMap.keySet()){
-					if(objectPointsClassNameMap.get(key).contains($ID.text)){
+				for(String key:classesAndObjectsMap.keySet()){
+					if(classesAndObjectsMap.get(key).contains($ID.text)){
 						flag =true;
 						break;
 					}
@@ -1301,8 +1425,8 @@ factor
 				else RW.writeFile($ID.text);
 			}
 			else {
-				for(String key:objectPointsClassNameMap.keySet()){
-					if(objectPointsClassNameMap.get(key).contains($ID.text)){
+				for(String key:classesAndObjectsMap.keySet()){
+					if(classesAndObjectsMap.get(key).contains($ID.text)){
 						flag =true;
 						break;
 					}
@@ -1319,14 +1443,12 @@ optionalSign
     :ADD_OP
     |
 ;
-NEWLINE: ('\n')+;
 ID: [a-zA-Z_]+ [a-zA-Z0-9_]*;
-INT: [0-9]+ ('.' [0-9]+)?;
+INT: [0-9]+ ([0-9]+)?;
 REL_OP: '=='|'<='|'>='|'!='|'<'|'>';
 ADD_OP: '+'|'-';
 MUL_OP: '*'|'/';
 BLOCK_COMMENT           : ('\'\'\'' .*? '\'\'\'' | '"""' .*? '"""') ->channel(HIDDEN);
 // match any line that starts with # and consumes all characters until the end of the line (~[\r\n]*).
 COMMENT                 : '#' ~[\r\n]* -> channel(HIDDEN);
-point: '.';
 WS: [ \r\n\t]+ -> skip;
