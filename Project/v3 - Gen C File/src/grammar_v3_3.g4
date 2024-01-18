@@ -1,13 +1,8 @@
 /*
-
-Zagkas Dimosthenis 4359
-Kalaitsidis Damianos 4370
-
 In v3_x we are working on the output file in c
 */
 
-
-grammar grammar_v3_2;
+grammar grammar_v3_3;
 @header{
 	import java.io.BufferedReader;
 	import java.io.BufferedWriter;
@@ -38,8 +33,11 @@ grammar grammar_v3_2;
     WriteToFile TmpRw;
     String tempNameClass,line,tempAssignment,inheritedClass,id,checkIdForParmObj,classNameForDowncasting;
     Boolean wrInFinalCFile,inheritance=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false,callStatFlag=false;
+    
+    // When closeBlock is true, the code block is closed. When false, it's open and it needs to be closed
+    Boolean closeBlock=true;
     // Raise assignFlag in assignmentStat before callStat|expression and lower it after them
-    int returnFlag,tabCounter = 0,counterForFields=2,lineCounter = 1,lineNumberOfstrucktParam=1;
+    int minTab=0,maxTab=0,returnFlag,tabCounter = 0,counterForFields=2,lineCounter = 1,lineNumberOfstrucktParam=1;
     Scanner myReader;
 	ArrayList<String> tempList,tempFuncName;
 
@@ -261,7 +259,47 @@ grammar grammar_v3_2;
         }
     }
 
+    // Given a line, it counts the number of tabs it has and returns their number.
+    // It also skips all empty lines and newlines
+    // Big mistake here, it always returns -1
+    // public int returnTotalNumberOfTabs(String line){
+    //     int total = 0;
+    //     if (!(line.startsWith("class"))){
+    //         while (myReader.hasNextLine()){
+    //             // System.out.println("line at while ="+line);
+    //             // Skip empty lines and newlines
+    //             if (line.isEmpty() || line.trim().equals("") || line.trim().equals("\n")) {
+    //                 line = myReader.nextLine();
+    //             }
+    //             else {  
+    //                 // System.out.println("line at else ="+line);
+    //                 // Big mistake here
+    //                 return -1;
+    //                 // break;
+    //             }
+    //         }
+    //         // Count the tabs on that line
+    //         // System.out.println("line at else ="+line);
+    //         // System.out.println("line length ="+line.length());
+    //         // This is bad, tabs are always at the beginning
+    //         // why go through the whole line, char by char?
+    //         for (int i = 0; i < line.length(); i++) {
+    //             char ch = line.charAt(i);
+    //             if (ch == ' ' || ch == '\t') {
+    //                 total++;
+    //             }
+    //             else return total;
+    //         }
+    //     }
+    //     return total;
+    // }
 
+
+
+    // Count tabs and return their number
+    // Four spaces are equal to a tab
+    // It's possible to accept a tab followed by four spaces (bad practise but still acceptable)
+    // Return -1 if the spaces are less that four (incomplete tab)
     public int countLeadingWhitespace(String line) {
 
         while (line.trim().isEmpty()){
@@ -472,7 +510,9 @@ classes
 class
     // First rule for classes without inheritance
     : 'class' ID ':'
-    {  
+    {  	minTab=0;
+		maxTab=0;
+		tabCounter=0;
         // Check for already used class name
         String className = $ID.text;
         if (!classesList.contains(className)){
@@ -512,7 +552,9 @@ class
 
     // Second rule for classes with inheritance
     |'class' ID{
-        
+		minTab=0;
+		maxTab=0;
+        tabCounter=0;
         // Check for already used class name
         String className = $ID.text;
         if (!classesList.contains(className)){
@@ -555,6 +597,9 @@ class
 main:
     'if' '__name__' '==' '\'__main__\'' ':'
     {
+		minTab=0;
+		maxTab=0;
+        tabCounter=0;
         line = myReader.nextLine();
 
         // This tabs will be 0 
@@ -643,6 +688,7 @@ initFunction
     :'def''__init__'
     {
         tabCounter +=1;
+		minTab = tabCounter;
         line = myReader.nextLine();
         
         //int temp = returnTotalNumberOfTabs(line) ;
@@ -713,7 +759,7 @@ function
 		tempFuncName.add($ID.text);
 		classesAndFunctionsMap.put(tempNameClass,tempFuncName);
         tabCounter +=1;
-
+		minTab = tabCounter;
         line = myReader.nextLine();
 
 
@@ -764,30 +810,35 @@ function
     }
 ;
 statements
-    :{tabCounter += 1;}
+    :{tabCounter += 1; maxTab = tabCounter;}
     (
         {
 
             line = myReader.nextLine();
             
 
-            int temp = countLeadingWhitespace(line);
+            int temp = countLeadingWhitespace(line) ;
 
-            // System.out.println("line in statements ="+line);
-            // System.out.println("tabCounter at statements ="+tabCounter);
-            // System.out.println("tabs at statements ="+temp);
-            // System.out.println("=======================================");
+            System.out.println("line in statements ="+line);
+            System.out.println("min tabs at statements ="+minTab);
+            System.out.println("max tabs at statements ="+maxTab);
+			System.out.println("tabCounter at statements =" + tabCounter);
+            System.out.println("tabs at statements ="+temp);
+            System.out.println("=======================================");
 
             // if(temp != -1 && temp!=tabCounter+1)
-            if(temp!=tabCounter){
+            if(temp <= minTab || temp > maxTab){
                 System.out.println("Check your tabs near line: "+line);
                 System.exit(1);
             }
+			else if(temp > minTab && temp < maxTab){
+				tabCounter-=(maxTab - temp);
+			}
         }
         statement
     )+
-    {tabCounter -= 1;}
-    |{tabCounter -= 1;}
+    {closeBlock = true; tabCounter -= 1; if(tabCounter<0)tabCounter=0;}
+    |{tabCounter -= 1;if(tabCounter<0)tabCounter=0;}
 ;
 statement
     :
@@ -920,16 +971,28 @@ assignmentStat
 // because python accepts both
 ifStat
     :'if'
-        {
-            // line = myReader.nextLine();
-            // int temp = countLeadingWhitespace(line) ;
-            // // if(temp != -1 && temp!=tabCounter+1)
-            // if(temp!=tabCounter){
-            //     System.out.println("Check your tabs near line: "+line);
-            //     System.exit(1);
-            // }
+       {
 
-            // Need to set elseFlag false for each if
+        System.out.println("tabCounter in if ="+tabCounter);
+        System.out.println("maxTab in if = "+maxTab);
+        System.out.println("=====================================");
+		
+        	// gia na klisei swsta to condition
+			if(tabCounter<maxTab){
+				int temp = countLeadingWhitespace(line) ;
+                
+                System.out.println("tabs in if ="+temp);
+                System.out.println("=====================================");
+
+                // 
+				for(int i=0;i<maxTab - temp;i++){
+					if(wrInFinalCFile == true)RW.writeFile("\t".repeat(tabCounter+(maxTab - temp)-(i+1))+"}\n");
+					else TmpRw.writeFile("\t".repeat(tabCounter+(maxTab - temp)-(i+1))+"}\n");
+				}
+
+				//closeBlock = true;
+			}
+			// Need to set elseFlag false for each if
             elseFlag = false;
             if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
             else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
@@ -938,30 +1001,34 @@ ifStat
     condition':'
     {
 		rmTabsCallstat = false;
-
-        // tabCounter +=1;
-
         if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
         statements
     {
+        System.out.println("close block in if after statements =" +closeBlock);
+        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
 
-        // tabCounter -=1;
-        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
-        else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
+		if(closeBlock == false){
+            
+            System.out.println("lllllllllllllllllllllllllllllllllllllll");
+
+			if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+			else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
+		}
     }
     elsepart
     |'if' '('
     {
-        // line = myReader.nextLine();
-        // int temp = countLeadingWhitespace(line) ;
-        // // if(temp != -1 && temp!=tabCounter+1)
-        // if(temp!=tabCounter){
-        //     System.out.println("Check your tabs near line: "+line);
-        //     System.exit(1);
-        // }
-
+		// gia na klisei swsta to condition
+		if(tabCounter<maxTab){
+			int temp = countLeadingWhitespace(line) ;
+			for(int i=0;i<maxTab - temp;i++){
+				if(wrInFinalCFile == true)RW.writeFile("\t".repeat(tabCounter+(maxTab - temp)-(i+1))+"}\n");
+				else TmpRw.writeFile("\t".repeat(tabCounter+(maxTab - temp)-(i+1))+"}\n");
+			}
+			closeBlock = true;
+		}
         elseFlag = false;
         if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
@@ -977,8 +1044,10 @@ ifStat
     statements
     {
         //tabCounter -=1;
-        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
-        else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
+		if(closeBlock == false){
+			if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+			else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
+		}
     }
     elsepart
 ;
@@ -1003,9 +1072,8 @@ elsepart
     }
     statements
     {
-        //tabCounter-=1;
-        if(wrInFinalCFile==true)RW.writeFile("}\n");
-        else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
+		if(wrInFinalCFile==true)RW.writeFile("}\n");
+		else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");	
     }
     |
 ;

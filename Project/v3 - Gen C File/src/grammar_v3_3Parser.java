@@ -1,4 +1,4 @@
-// Generated from grammar_v3_2.g4 by ANTLR 4.13.1
+// Generated from grammar_v3_3.g4 by ANTLR 4.13.1
 
 	import java.io.BufferedReader;
 	import java.io.BufferedWriter;
@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast", "CheckReturnValue"})
-public class grammar_v3_2Parser extends Parser {
+public class grammar_v3_3Parser extends Parser {
 	static { RuntimeMetaData.checkVersion("4.13.1", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
@@ -103,7 +103,7 @@ public class grammar_v3_2Parser extends Parser {
 	}
 
 	@Override
-	public String getGrammarFileName() { return "grammar_v3_2.g4"; }
+	public String getGrammarFileName() { return "grammar_v3_3.g4"; }
 
 	@Override
 	public String[] getRuleNames() { return ruleNames; }
@@ -129,9 +129,9 @@ public class grammar_v3_2Parser extends Parser {
 	    WriteToFile RW;
 	    WriteToFile TmpRw;
 	    String tempNameClass,line,tempAssignment,inheritedClass,id,checkIdForParmObj,classNameForDowncasting;
-	    Boolean wrInFinalCFile,inheritance=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false,callStatFlag=false;
+	    Boolean closeBlock=true,wrInFinalCFile,inheritance=false,elseFlag = true,rmTabsCallstat = false,dontWriteInheritanceData= false, assignFlag = false,callStatFlag=false;
 	    // Raise assignFlag in assignmentStat before callStat|expression and lower it after them
-	    int returnFlag,tabCounter = 0,counterForFields=2,lineCounter = 1,lineNumberOfstrucktParam=1;
+	    int minTab=0,maxTab=0,returnFlag,tabCounter = 0,counterForFields=2,lineCounter = 1,lineNumberOfstrucktParam=1;
 	    Scanner myReader;
 		ArrayList<String> tempList,tempFuncName;
 
@@ -353,7 +353,47 @@ public class grammar_v3_2Parser extends Parser {
 	        }
 	    }
 
+	    // Given a line, it counts the number of tabs it has and returns their number.
+	    // It also skips all empty lines and newlines
+	    // Big mistake here, it always returns -1
+	    // public int returnTotalNumberOfTabs(String line){
+	    //     int total = 0;
+	    //     if (!(line.startsWith("class"))){
+	    //         while (myReader.hasNextLine()){
+	    //             // System.out.println("line at while ="+line);
+	    //             // Skip empty lines and newlines
+	    //             if (line.isEmpty() || line.trim().equals("") || line.trim().equals("\n")) {
+	    //                 line = myReader.nextLine();
+	    //             }
+	    //             else {  
+	    //                 // System.out.println("line at else ="+line);
+	    //                 // Big mistake here
+	    //                 return -1;
+	    //                 // break;
+	    //             }
+	    //         }
+	    //         // Count the tabs on that line
+	    //         // System.out.println("line at else ="+line);
+	    //         // System.out.println("line length ="+line.length());
+	    //         // This is bad, tabs are always at the beginning
+	    //         // why go through the whole line, char by char?
+	    //         for (int i = 0; i < line.length(); i++) {
+	    //             char ch = line.charAt(i);
+	    //             if (ch == ' ' || ch == '\t') {
+	    //                 total++;
+	    //             }
+	    //             else return total;
+	    //         }
+	    //     }
+	    //     return total;
+	    // }
 
+
+
+	    // Count tabs and return their number
+	    // Four spaces are equal to a tab
+	    // It's possible to accept a tab followed by four spaces (bad practise but still acceptable)
+	    // Return -1 if the spaces are less that four (incomplete tab)
 	    public int countLeadingWhitespace(String line) {
 
 	        while (line.trim().isEmpty()){
@@ -544,7 +584,7 @@ public class grammar_v3_2Parser extends Parser {
 			lineNumberOfstrucktParam++;
 		}
 
-	public grammar_v3_2Parser(TokenStream input) {
+	public grammar_v3_3Parser(TokenStream input) {
 		super(input);
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
@@ -560,11 +600,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_prog; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterProg(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterProg(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitProg(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitProg(this);
 		}
 	}
 
@@ -606,11 +646,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_classes; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterClasses(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterClasses(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitClasses(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitClasses(this);
 		}
 	}
 
@@ -665,9 +705,9 @@ public class grammar_v3_2Parser extends Parser {
 	@SuppressWarnings("CheckReturnValue")
 	public static class ClassContext extends ParserRuleContext {
 		public Token ID;
-		public List<TerminalNode> ID() { return getTokens(grammar_v3_2Parser.ID); }
+		public List<TerminalNode> ID() { return getTokens(grammar_v3_3Parser.ID); }
 		public TerminalNode ID(int i) {
-			return getToken(grammar_v3_2Parser.ID, i);
+			return getToken(grammar_v3_3Parser.ID, i);
 		}
 		public InitFunctionContext initFunction() {
 			return getRuleContext(InitFunctionContext.class,0);
@@ -681,11 +721,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_class; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterClass(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterClass(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitClass(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitClass(this);
 		}
 	}
 
@@ -705,7 +745,9 @@ public class grammar_v3_2Parser extends Parser {
 				((ClassContext)_localctx).ID = match(ID);
 				setState(68);
 				match(T__1);
-				  
+				  	minTab=0;
+						maxTab=0;
+						tabCounter=0;
 				        // Check for already used class name
 				        String className = (((ClassContext)_localctx).ID!=null?((ClassContext)_localctx).ID.getText():null);
 				        if (!classesList.contains(className)){
@@ -755,7 +797,9 @@ public class grammar_v3_2Parser extends Parser {
 				setState(75);
 				((ClassContext)_localctx).ID = match(ID);
 
-				        
+						minTab=0;
+						maxTab=0;
+				        tabCounter=0;
 				        // Check for already used class name
 				        String className = (((ClassContext)_localctx).ID!=null?((ClassContext)_localctx).ID.getText():null);
 				        if (!classesList.contains(className)){
@@ -832,11 +876,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_main; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterMain(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterMain(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitMain(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitMain(this);
 		}
 	}
 
@@ -857,6 +901,9 @@ public class grammar_v3_2Parser extends Parser {
 			setState(93);
 			match(T__1);
 
+					minTab=0;
+					maxTab=0;
+			        tabCounter=0;
 			        line = myReader.nextLine();
 
 			        // This tabs will be 0 
@@ -966,11 +1013,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_initFunction; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterInitFunction(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterInitFunction(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitInitFunction(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitInitFunction(this);
 		}
 	}
 
@@ -986,6 +1033,7 @@ public class grammar_v3_2Parser extends Parser {
 			match(T__9);
 
 			        tabCounter +=1;
+					minTab = tabCounter;
 			        line = myReader.nextLine();
 			        
 			        //int temp = returnTotalNumberOfTabs(line) ;
@@ -1080,11 +1128,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_functions; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterFunctions(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterFunctions(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitFunctions(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitFunctions(this);
 		}
 	}
 
@@ -1142,7 +1190,7 @@ public class grammar_v3_2Parser extends Parser {
 	@SuppressWarnings("CheckReturnValue")
 	public static class FunctionContext extends ParserRuleContext {
 		public Token ID;
-		public TerminalNode ID() { return getToken(grammar_v3_2Parser.ID, 0); }
+		public TerminalNode ID() { return getToken(grammar_v3_3Parser.ID, 0); }
 		public FormalparlistContext formalparlist() {
 			return getRuleContext(FormalparlistContext.class,0);
 		}
@@ -1155,11 +1203,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_function; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterFunction(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterFunction(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitFunction(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitFunction(this);
 		}
 	}
 
@@ -1177,7 +1225,7 @@ public class grammar_v3_2Parser extends Parser {
 					tempFuncName.add((((FunctionContext)_localctx).ID!=null?((FunctionContext)_localctx).ID.getText():null));
 					classesAndFunctionsMap.put(tempNameClass,tempFuncName);
 			        tabCounter +=1;
-
+					minTab = tabCounter;
 			        line = myReader.nextLine();
 
 
@@ -1275,11 +1323,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_statements; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterStatements(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterStatements(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitStatements(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitStatements(this);
 		}
 	}
 
@@ -1294,7 +1342,7 @@ public class grammar_v3_2Parser extends Parser {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				tabCounter += 1;
+				tabCounter += 1; maxTab = tabCounter;
 				setState(137); 
 				_errHandler.sync(this);
 				_alt = 1;
@@ -1308,18 +1356,23 @@ public class grammar_v3_2Parser extends Parser {
 						            line = myReader.nextLine();
 						            
 
-						            int temp = countLeadingWhitespace(line);
+						            int temp = countLeadingWhitespace(line) ;
 
-						            // System.out.println("line in statements ="+line);
-						            // System.out.println("tabCounter at statements ="+tabCounter);
-						            // System.out.println("tabs at statements ="+temp);
-						            // System.out.println("=======================================");
+						            System.out.println("line in statements ="+line);
+						            System.out.println("min tabs at statements ="+minTab);
+						            System.out.println("max tabs at statements ="+maxTab);
+									System.out.println("tabCounter at statements =" + tabCounter);
+						            System.out.println("tabs at statements ="+temp);
+						            System.out.println("=======================================");
 
 						            // if(temp != -1 && temp!=tabCounter+1)
-						            if(temp!=tabCounter){
+						            if(temp <= minTab || temp > maxTab){
 						                System.out.println("Check your tabs near line: "+line);
 						                System.exit(1);
 						            }
+									else if(temp > minTab && temp < maxTab){
+										tabCounter-=(maxTab - temp);
+									}
 						        
 						setState(136);
 						statement();
@@ -1333,13 +1386,13 @@ public class grammar_v3_2Parser extends Parser {
 					_errHandler.sync(this);
 					_alt = getInterpreter().adaptivePredict(_input,5,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
-				tabCounter -= 1;
+				closeBlock = true; tabCounter -= 1; if(tabCounter<0)tabCounter=0;
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				tabCounter -= 1;
+				tabCounter -= 1;if(tabCounter<0)tabCounter=0;
 				}
 				break;
 			}
@@ -1381,11 +1434,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_statement; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterStatement(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterStatement(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitStatement(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitStatement(this);
 		}
 	}
 
@@ -1473,11 +1526,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_formalparlist; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterFormalparlist(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterFormalparlist(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitFormalparlist(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitFormalparlist(this);
 		}
 	}
 
@@ -1523,7 +1576,7 @@ public class grammar_v3_2Parser extends Parser {
 	public static class FormalparitemContext extends ParserRuleContext {
 		public Token ID;
 		public ObjContext obj;
-		public TerminalNode ID() { return getToken(grammar_v3_2Parser.ID, 0); }
+		public TerminalNode ID() { return getToken(grammar_v3_3Parser.ID, 0); }
 		public ObjContext obj() {
 			return getRuleContext(ObjContext.class,0);
 		}
@@ -1533,11 +1586,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_formalparitem; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterFormalparitem(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterFormalparitem(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitFormalparitem(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitFormalparitem(this);
 		}
 	}
 
@@ -1596,11 +1649,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_actualparlist; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterActualparlist(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterActualparlist(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitActualparlist(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitActualparlist(this);
 		}
 	}
 
@@ -1687,18 +1740,18 @@ public class grammar_v3_2Parser extends Parser {
 		public ObjContext obj() {
 			return getRuleContext(ObjContext.class,0);
 		}
-		public TerminalNode ID() { return getToken(grammar_v3_2Parser.ID, 0); }
+		public TerminalNode ID() { return getToken(grammar_v3_3Parser.ID, 0); }
 		public ActualparitemContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_actualparitem; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterActualparitem(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterActualparitem(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitActualparitem(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitActualparitem(this);
 		}
 	}
 
@@ -1759,18 +1812,18 @@ public class grammar_v3_2Parser extends Parser {
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
 		}
-		public TerminalNode ID() { return getToken(grammar_v3_2Parser.ID, 0); }
+		public TerminalNode ID() { return getToken(grammar_v3_3Parser.ID, 0); }
 		public AssignmentStatContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_assignmentStat; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterAssignmentStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterAssignmentStat(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitAssignmentStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitAssignmentStat(this);
 		}
 	}
 
@@ -1894,11 +1947,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_ifStat; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterIfStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterIfStat(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitIfStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitIfStat(this);
 		}
 	}
 
@@ -1915,15 +1968,27 @@ public class grammar_v3_2Parser extends Parser {
 				setState(208);
 				match(T__4);
 
-				            // line = myReader.nextLine();
-				            // int temp = countLeadingWhitespace(line) ;
-				            // // if(temp != -1 && temp!=tabCounter+1)
-				            // if(temp!=tabCounter){
-				            //     System.out.println("Check your tabs near line: "+line);
-				            //     System.exit(1);
-				            // }
 
-				            // Need to set elseFlag false for each if
+				        System.out.println("tabCounter in if ="+tabCounter);
+				        System.out.println("maxTab in if = "+maxTab);
+				        System.out.println("=====================================");
+						
+				        	// gia na klisei swsta to condition
+							if(tabCounter<maxTab){
+								int temp = countLeadingWhitespace(line) ;
+				                
+				                System.out.println("tabs in if ="+temp);
+				                System.out.println("=====================================");
+
+				                // 
+								for(int i=0;i<maxTab - temp;i++){
+									if(wrInFinalCFile == true)RW.writeFile("\t".repeat(tabCounter+(maxTab - temp)-(i+1))+"}\n");
+									else TmpRw.writeFile("\t".repeat(tabCounter+(maxTab - temp)-(i+1))+"}\n");
+								}
+
+								closeBlock = true;
+							}
+							// Need to set elseFlag false for each if
 				            elseFlag = false;
 				            if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
 				            else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
@@ -1935,19 +2000,22 @@ public class grammar_v3_2Parser extends Parser {
 				match(T__1);
 
 						rmTabsCallstat = false;
-
-				        // tabCounter +=1;
-
 				        if(wrInFinalCFile==true)RW.writeFile("){\n");
 				        else TmpRw.writeFile("){\n");
 				    
 				setState(213);
 				statements();
 
+				        System.out.println("close block in if after statements =" +closeBlock);
+				        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
 
-				        // tabCounter -=1;
-				        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
-				        else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
+						if(closeBlock == true){
+				            
+				            System.out.println("lllllllllllllllllllllllllllllllllllllll");
+
+							if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+							else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
+						}
 				    
 				setState(215);
 				elsepart();
@@ -1961,14 +2029,15 @@ public class grammar_v3_2Parser extends Parser {
 				setState(218);
 				match(T__2);
 
-				        // line = myReader.nextLine();
-				        // int temp = countLeadingWhitespace(line) ;
-				        // // if(temp != -1 && temp!=tabCounter+1)
-				        // if(temp!=tabCounter){
-				        //     System.out.println("Check your tabs near line: "+line);
-				        //     System.exit(1);
-				        // }
-
+						// gia na klisei swsta to condition
+						if(tabCounter<maxTab){
+							int temp = countLeadingWhitespace(line) ;
+							for(int i=0;i<maxTab - temp;i++){
+								if(wrInFinalCFile == true)RW.writeFile("\t".repeat(tabCounter+(maxTab - temp)-(i+1))+"}\n");
+								else TmpRw.writeFile("\t".repeat(tabCounter+(maxTab - temp)-(i+1))+"}\n");
+							}
+							closeBlock = true;
+						}
 				        elseFlag = false;
 				        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
 				        else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
@@ -1990,8 +2059,10 @@ public class grammar_v3_2Parser extends Parser {
 				statements();
 
 				        //tabCounter -=1;
-				        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
-				        else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
+						if(closeBlock == false){
+							if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
+							else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
+						}
 				    
 				setState(226);
 				elsepart();
@@ -2021,11 +2092,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_elsepart; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterElsepart(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterElsepart(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitElsepart(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitElsepart(this);
 		}
 	}
 
@@ -2063,9 +2134,8 @@ public class grammar_v3_2Parser extends Parser {
 				setState(233);
 				statements();
 
-				        //tabCounter-=1;
-				        if(wrInFinalCFile==true)RW.writeFile("}\n");
-				        else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
+						if(wrInFinalCFile==true)RW.writeFile("}\n");
+						else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");	
 				    
 				}
 				break;
@@ -2101,11 +2171,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_whileStat; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterWhileStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterWhileStat(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitWhileStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitWhileStat(this);
 		}
 	}
 
@@ -2205,11 +2275,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_printStat; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterPrintStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterPrintStat(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitPrintStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitPrintStat(this);
 		}
 	}
 
@@ -2282,11 +2352,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_returnStat; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterReturnStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterReturnStat(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitReturnStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitReturnStat(this);
 		}
 	}
 
@@ -2363,18 +2433,18 @@ public class grammar_v3_2Parser extends Parser {
 		public ActualparlistContext actualparlist() {
 			return getRuleContext(ActualparlistContext.class,0);
 		}
-		public TerminalNode ID() { return getToken(grammar_v3_2Parser.ID, 0); }
+		public TerminalNode ID() { return getToken(grammar_v3_3Parser.ID, 0); }
 		public CallStatContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_callStat; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterCallStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterCallStat(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitCallStat(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitCallStat(this);
 		}
 	}
 
@@ -2558,11 +2628,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_condition; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterCondition(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterCondition(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitCondition(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitCondition(this);
 		}
 	}
 
@@ -2622,11 +2692,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_boolterm; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterBoolterm(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterBoolterm(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitBoolterm(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitBoolterm(this);
 		}
 	}
 
@@ -2684,18 +2754,18 @@ public class grammar_v3_2Parser extends Parser {
 		public ExpressionContext expression(int i) {
 			return getRuleContext(ExpressionContext.class,i);
 		}
-		public TerminalNode REL_OP() { return getToken(grammar_v3_2Parser.REL_OP, 0); }
+		public TerminalNode REL_OP() { return getToken(grammar_v3_3Parser.REL_OP, 0); }
 		public BoolfactorContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_boolfactor; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterBoolfactor(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterBoolfactor(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitBoolfactor(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitBoolfactor(this);
 		}
 	}
 
@@ -2777,9 +2847,9 @@ public class grammar_v3_2Parser extends Parser {
 	@SuppressWarnings("CheckReturnValue")
 	public static class ObjContext extends ParserRuleContext {
 		public Token ID;
-		public List<TerminalNode> ID() { return getTokens(grammar_v3_2Parser.ID); }
+		public List<TerminalNode> ID() { return getTokens(grammar_v3_3Parser.ID); }
 		public TerminalNode ID(int i) {
-			return getToken(grammar_v3_2Parser.ID, i);
+			return getToken(grammar_v3_3Parser.ID, i);
 		}
 		public CallStatContext callStat() {
 			return getRuleContext(CallStatContext.class,0);
@@ -2790,11 +2860,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_obj; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterObj(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterObj(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitObj(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitObj(this);
 		}
 	}
 
@@ -2899,9 +2969,9 @@ public class grammar_v3_2Parser extends Parser {
 		public TermContext term(int i) {
 			return getRuleContext(TermContext.class,i);
 		}
-		public List<TerminalNode> ADD_OP() { return getTokens(grammar_v3_2Parser.ADD_OP); }
+		public List<TerminalNode> ADD_OP() { return getTokens(grammar_v3_3Parser.ADD_OP); }
 		public TerminalNode ADD_OP(int i) {
-			return getToken(grammar_v3_2Parser.ADD_OP, i);
+			return getToken(grammar_v3_3Parser.ADD_OP, i);
 		}
 		public ExpressionContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -2909,11 +2979,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_expression; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterExpression(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterExpression(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitExpression(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitExpression(this);
 		}
 	}
 
@@ -2978,9 +3048,9 @@ public class grammar_v3_2Parser extends Parser {
 		public FactorContext factor(int i) {
 			return getRuleContext(FactorContext.class,i);
 		}
-		public List<TerminalNode> MUL_OP() { return getTokens(grammar_v3_2Parser.MUL_OP); }
+		public List<TerminalNode> MUL_OP() { return getTokens(grammar_v3_3Parser.MUL_OP); }
 		public TerminalNode MUL_OP(int i) {
-			return getToken(grammar_v3_2Parser.MUL_OP, i);
+			return getToken(grammar_v3_3Parser.MUL_OP, i);
 		}
 		public TermContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -2988,11 +3058,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_term; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterTerm(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterTerm(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitTerm(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitTerm(this);
 		}
 	}
 
@@ -3044,8 +3114,8 @@ public class grammar_v3_2Parser extends Parser {
 	public static class FactorContext extends ParserRuleContext {
 		public Token INT;
 		public Token ID;
-		public TerminalNode INT() { return getToken(grammar_v3_2Parser.INT, 0); }
-		public TerminalNode ID() { return getToken(grammar_v3_2Parser.ID, 0); }
+		public TerminalNode INT() { return getToken(grammar_v3_3Parser.INT, 0); }
+		public TerminalNode ID() { return getToken(grammar_v3_3Parser.ID, 0); }
 		public ObjContext obj() {
 			return getRuleContext(ObjContext.class,0);
 		}
@@ -3058,11 +3128,11 @@ public class grammar_v3_2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_factor; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterFactor(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterFactor(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitFactor(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitFactor(this);
 		}
 	}
 
@@ -3151,18 +3221,18 @@ public class grammar_v3_2Parser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class OptionalSignContext extends ParserRuleContext {
-		public TerminalNode ADD_OP() { return getToken(grammar_v3_2Parser.ADD_OP, 0); }
+		public TerminalNode ADD_OP() { return getToken(grammar_v3_3Parser.ADD_OP, 0); }
 		public OptionalSignContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_optionalSign; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).enterOptionalSign(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).enterOptionalSign(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof grammar_v3_2Listener ) ((grammar_v3_2Listener)listener).exitOptionalSign(this);
+			if ( listener instanceof grammar_v3_3Listener ) ((grammar_v3_3Listener)listener).exitOptionalSign(this);
 		}
 	}
 
