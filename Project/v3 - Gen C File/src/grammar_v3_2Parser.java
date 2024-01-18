@@ -119,7 +119,7 @@ public class grammar_v3_2Parser extends Parser {
 	    // Change this to the directory where the output file will go
 	    String dirPath = "C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src\\";
 	    // Change this to the directory where your python input is
-	    String pythonInput = "testingTabs.py";
+	    String pythonInput = "pythonBasicInput.py";
 
 
 	    ArrayList <Scope> scopes_list = new ArrayList<Scope>();
@@ -388,16 +388,12 @@ public class grammar_v3_2Parser extends Parser {
 	    //     return total;
 	    // }
 
+
+
 	    // Count tabs and return their number
 	    // Four spaces are equal to a tab
 	    // It's possible to accept a tab followed by four spaces (bad practise but still acceptable)
 	    // Return -1 if the spaces are less that four (incomplete tab)
-
-
-	    // Given a line, it counts the number of tabs it has and returns their number.
-	    // It also skips all empty lines and newlines
-	    // It counts four spaces as a tab
-	    // If it finds less that four spaces, indentation error
 	    public int countLeadingWhitespace(String line) {
 
 	        while (line.trim().isEmpty()){
@@ -1987,6 +1983,7 @@ public class grammar_v3_2Parser extends Parser {
 				    
 				setState(213);
 				statements();
+
 
 				        // tabCounter -=1;
 				        if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");

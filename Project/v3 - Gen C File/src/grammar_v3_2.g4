@@ -24,7 +24,7 @@ grammar grammar_v3_2;
     // Change this to the directory where the output file will go
     String dirPath = "C:\\Users\\dimos\\OneDrive - ΠΑΝΕΠΙΣΤΗΜΙΟ ΙΩΑΝΝΙΝΩΝ\\School\\6th Year\\11th Semester\\Compilers 2\\Project\\v3 - Gen C File\\src\\";
     // Change this to the directory where your python input is
-    String pythonInput = "testingTabs.py";
+    String pythonInput = "pythonBasicInput.py";
 
 
     ArrayList <Scope> scopes_list = new ArrayList<Scope>();
@@ -293,16 +293,12 @@ grammar grammar_v3_2;
     //     return total;
     // }
 
+
+
     // Count tabs and return their number
     // Four spaces are equal to a tab
     // It's possible to accept a tab followed by four spaces (bad practise but still acceptable)
     // Return -1 if the spaces are less that four (incomplete tab)
-
-
-    // Given a line, it counts the number of tabs it has and returns their number.
-    // It also skips all empty lines and newlines
-    // It counts four spaces as a tab
-    // If it finds less that four spaces, indentation error
     public int countLeadingWhitespace(String line) {
 
         while (line.trim().isEmpty()){
@@ -380,7 +376,7 @@ grammar grammar_v3_2;
 		}
 		return line;
 	}
-	public void objectParam(String paraitem){
+	public void doAlotOfThingsForParameters(String paraitem){
 		// check if the parameter is not a number
 		if(!(paraitem.matches("-?\\d+(\\.\\d+)?"))){
 			//take all class names from hashmap to return their obj to check if parameter is an object or not 
@@ -914,7 +910,7 @@ actualparlist
     :actualparitem
     {
         if(!($actualparitem.text.isEmpty())){
-			objectParam($actualparitem.text);
+			doAlotOfThingsForParameters($actualparitem.text);
             if(wrInFinalCFile==true){
 				RW.closeFile();
 				RW.seekInfile($actualparitem.text.length()+2,",");
@@ -932,7 +928,7 @@ actualparlist
         if(wrInFinalCFile == true)RW.writeFile(",");
         else TmpRw.writeFile(",");
     }
-    actualparitem {objectParam($actualparitem.text);})*
+    actualparitem {doAlotOfThingsForParameters($actualparitem.text);})*
     |
 ;
 actualparitem
@@ -1029,6 +1025,7 @@ ifStat
     }
         statements
     {
+
         // tabCounter -=1;
         if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");

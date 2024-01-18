@@ -1,4 +1,4 @@
-class Person:
+Person:
 	def __init__(self, pid, born):
 		self.pid = pid
 		self.born = born
@@ -45,4 +45,4 @@ if __name__ == '__main__':
 	print(peter.getDepartment())
 	print(george.getPid())
 	print(peter.getPid())
-	# stupid = StupidPrint(peter)
+	stupid = StupidPrint(peter)

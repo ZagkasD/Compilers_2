@@ -1,17 +1,17 @@
 class Person:
-	def __init__(self, pid, born):
-		self.pid = pid
-		self.born = born
-	def getPid(self):
-		return self.pid
-	def getBorn(self):
-		return self.born
-	def millenium(self):
-		if self.born < 2000:
-			return 1
-		else:
-			return 2
-	
+def __init__(self, pid, born):
+        self.pid = pid
+        self.born = born
+    def getPid(self):
+        return self.pid
+    def getBorn(self):
+        return self.born
+    def millenium(self):
+        if self.born < 2000:
+            return 1
+        else:
+            return 2
+        
 class Employee(Person):
 	def __init__(self, pid, born, afm, department):
 		self.pid = pid
@@ -31,7 +31,7 @@ class StupidPrint:
 		print(employee.born)
 		print(employee.afm)
 		print(employee.department)
-
+  
 if __name__ == '__main__':
 	george = Person(200223, 2002)
 	john = Person(200055, 2000)
@@ -45,4 +45,4 @@ if __name__ == '__main__':
 	print(peter.getDepartment())
 	print(george.getPid())
 	print(peter.getPid())
-	# stupid = StupidPrint(peter)
+	stupid = StupidPrint(peter)
