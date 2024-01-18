@@ -808,7 +808,7 @@ statements
             line = myReader.nextLine();
             
 
-            int temp = countLeadingWhitespace(line) ;
+            int temp = countLeadingWhitespace(line);
 
             // System.out.println("line in statements ="+line);
             // System.out.println("tabCounter at statements ="+tabCounter);

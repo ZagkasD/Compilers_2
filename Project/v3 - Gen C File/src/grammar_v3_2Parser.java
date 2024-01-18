@@ -471,7 +471,7 @@ public class grammar_v3_2Parser extends Parser {
 			}
 			return line;
 		}
-		public void objectParam(String paraitem){
+		public void doAlotOfThingsForParameters(String paraitem){
 			// check if the parameter is not a number
 			if(!(paraitem.matches("-?\\d+(\\.\\d+)?"))){
 				//take all class names from hashmap to return their obj to check if parameter is an object or not 
@@ -1348,7 +1348,7 @@ public class grammar_v3_2Parser extends Parser {
 						            line = myReader.nextLine();
 						            
 
-						            int temp = countLeadingWhitespace(line) ;
+						            int temp = countLeadingWhitespace(line);
 
 						            // System.out.println("line in statements ="+line);
 						            // System.out.println("tabCounter at statements ="+tabCounter);
@@ -1662,7 +1662,7 @@ public class grammar_v3_2Parser extends Parser {
 				((ActualparlistContext)_localctx).actualparitem = actualparitem();
 
 				        if(!((((ActualparlistContext)_localctx).actualparitem!=null?_input.getText(((ActualparlistContext)_localctx).actualparitem.start,((ActualparlistContext)_localctx).actualparitem.stop):null).isEmpty())){
-							objectParam((((ActualparlistContext)_localctx).actualparitem!=null?_input.getText(((ActualparlistContext)_localctx).actualparitem.start,((ActualparlistContext)_localctx).actualparitem.stop):null));
+							doAlotOfThingsForParameters((((ActualparlistContext)_localctx).actualparitem!=null?_input.getText(((ActualparlistContext)_localctx).actualparitem.start,((ActualparlistContext)_localctx).actualparitem.stop):null));
 				            if(wrInFinalCFile==true){
 								RW.closeFile();
 								RW.seekInfile((((ActualparlistContext)_localctx).actualparitem!=null?_input.getText(((ActualparlistContext)_localctx).actualparitem.start,((ActualparlistContext)_localctx).actualparitem.stop):null).length()+2,",");
@@ -1689,7 +1689,7 @@ public class grammar_v3_2Parser extends Parser {
 					    
 					setState(175);
 					((ActualparlistContext)_localctx).actualparitem = actualparitem();
-					objectParam((((ActualparlistContext)_localctx).actualparitem!=null?_input.getText(((ActualparlistContext)_localctx).actualparitem.start,((ActualparlistContext)_localctx).actualparitem.stop):null));
+					doAlotOfThingsForParameters((((ActualparlistContext)_localctx).actualparitem!=null?_input.getText(((ActualparlistContext)_localctx).actualparitem.start,((ActualparlistContext)_localctx).actualparitem.stop):null));
 					}
 					}
 					setState(182);
