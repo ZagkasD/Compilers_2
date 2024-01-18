@@ -261,103 +261,84 @@ grammar grammar_v3_2;
     // Given a line, it counts the number of tabs it has and returns their number.
     // It also skips all empty lines and newlines
     // Big mistake here, it always returns -1
-    public int returnTotalNumberOfTabs(String line){
-        int total = 0;
-        if (!(line.startsWith("class"))){
-            while (myReader.hasNextLine()){
-                // System.out.println("line at while ="+line);
-                // Skip empty lines and newlines
-                if (line.isEmpty() || line.trim().equals("") || line.trim().equals("\n")) {
-                    line = myReader.nextLine();
-                }
-                else {  
-                    // System.out.println("line at else ="+line);
-                    // Big mistake here
-                    return -1;
-                    // break;
-                }
-            }
-            // Count the tabs on that line
-            // System.out.println("line at else ="+line);
-            // System.out.println("line length ="+line.length());
-            // This is bad, tabs are always at the beginning
-            // why go through the whole line, char by char?
-            for (int i = 0; i < line.length(); i++) {
-                char ch = line.charAt(i);
-                if (ch == ' ' || ch == '\t') {
-                    total++;
-                }
-                else return total;
-            }
-        }
-        return total;
-    }
-
-    // public int countLeadingWhitespace(String text) {
-    //     if (text == null) {
-    //         throw new IllegalArgumentException("Input text cannot be null.");
-    // }
-
-    //     // Split the text into lines
-    //     String[] lines = text.split("\n");
-
-    //     for (String line : lines) {
-    //         // Skip lines that start with "class" or are empty/whitespace only
-    //         if (!line.startsWith("class") && !line.trim().isEmpty()) {
-    //             // Use a regex to find leading whitespace (tabs and spaces)
-    //             Matcher matcher = Pattern.compile("^\\s+").matcher(line);
-    //             if (matcher.find()) {
-    //                 return matcher.group().length(); // Return the length of the leading whitespace
+    // public int returnTotalNumberOfTabs(String line){
+    //     int total = 0;
+    //     if (!(line.startsWith("class"))){
+    //         while (myReader.hasNextLine()){
+    //             // System.out.println("line at while ="+line);
+    //             // Skip empty lines and newlines
+    //             if (line.isEmpty() || line.trim().equals("") || line.trim().equals("\n")) {
+    //                 line = myReader.nextLine();
     //             }
-    //             break; // Exit loop after processing the first non-empty, non-class line
+    //             else {  
+    //                 // System.out.println("line at else ="+line);
+    //                 // Big mistake here
+    //                 return -1;
+    //                 // break;
+    //             }
     //         }
-    //     }
-    //     return 0; // Return 0 if no suitable line is found
-    // }
-
-    // public int countLeadingWhitespace(String line) {
-    //     if (line == null) {
-    //         throw new IllegalArgumentException("Input line cannot be null.");
-    //     }
-
-    //     int tabEquivalentCount = 0;
-    //     int consecutiveSpaces = 0;
-    //     int spacesPerTab = 4; // Number of spaces equivalent to one tab
-
-    //     // Skip lines that start with "class" or are empty/whitespace only
-    //     if (!line.startsWith("class") && !line.trim().isEmpty()) {
+    //         // Count the tabs on that line
+    //         // System.out.println("line at else ="+line);
+    //         // System.out.println("line length ="+line.length());
+    //         // This is bad, tabs are always at the beginning
+    //         // why go through the whole line, char by char?
     //         for (int i = 0; i < line.length(); i++) {
     //             char ch = line.charAt(i);
-    //             System.out.println("char ="+ch+"wtf");
-    //             if (ch == '\t') {
-    //                 consecutiveSpaces++;
-    //                 System.out.println("consecutiveSpaces ="+consecutiveSpaces);
-    //                 if (consecutiveSpaces == spacesPerTab) {
-    //                     tabEquivalentCount++;
-    //                     consecutiveSpaces = 0; // Reset the consecutive space count
-    //                 }
-    //             } else {
-    //                 break; // Stop counting when a non-space character is encountered
+    //             if (ch == ' ' || ch == '\t') {
+    //                 total++;
     //             }
+    //             else return total;
     //         }
     //     }
-
-    //     return tabEquivalentCount; // Return the count of space groups equivalent to tabs
+    //     return total;
     // }
 
+    // Count tabs and return their number
+    // Four spaces are equal to a tab
+    // It's possible to accept a tab followed by four spaces (bad practise but still acceptable)
+    // Return -1 if the spaces are less that four (incomplete tab)
+
+
+    // Given a line, it counts the number of tabs it has and returns their number.
+    // It also skips all empty lines and newlines
+    // It counts four spaces as a tab
+    // If it finds less that four spaces, indentation error
     public int countLeadingWhitespace(String line) {
-        if (line == null) {
-            throw new IllegalArgumentException("Input line cannot be null.");
+
+        while (line.trim().isEmpty()){
+            line = myReader.nextLine();
         }
-        // Skip lines that start with "class" or are empty/whitespace only
-        if (!line.startsWith("class") && !line.trim().isEmpty()) {
-            Matcher matcher = Pattern.compile("^\\s+").matcher(line);
-            if (matcher.find()) {
-                return matcher.group().length(); // Return the length of the leading whitespace
+        
+        // Now line is a non-empty line, process it
+        int tabCount = 0;
+        int consecutiveSpaces = 0;
+        final int spacesPerTab = 4; // Number of spaces equivalent to one tab
+
+        for (int i = 0; i < line.length(); i++) {
+            char ch = line.charAt(i);
+
+            if (ch == '\t') {
+                tabCount++;
+                consecutiveSpaces = 0;
+            } else if (ch == ' ') {
+                consecutiveSpaces++;
+                if (consecutiveSpaces == spacesPerTab) {
+                    tabCount++;
+                    consecutiveSpaces = 0;
+                }
+            } else {
+                break; // Stop counting once a non-whitespace character is encountered
             }
         }
-        return 0; // Return 0 if no leading whitespace or line is not valid
+
+        if (consecutiveSpaces > 0) {
+            return -1; // Indentation error: incomplete tab
+        }
+
+        return tabCount; // Return the number of tabs
     }
+
+
 
 
 
@@ -521,7 +502,7 @@ classes
         try{
             myReader = new Scanner(pyFile);
         }catch (IOException e) {
-                System.out.println("An error occurred.");
+                System.out.println("An error occurred while reading the python input file.");
                 e.printStackTrace();
             }
         RW = new WriteToFile();
@@ -545,18 +526,19 @@ class
         
         line = myReader.nextLine();
 
-        System.out.println("line ="+line);
-
         // This temp will be 0 
-        // int temp = returnTotalNumberOfTabs(line) ;
-        
         int temp = countLeadingWhitespace(line);
 
-        // if(temp != -1 && temp!=tabCounter)
-        if(temp!=tabCounter){
-            System.err.println("IndentationError");
-            System.exit(1);    
 
+        // System.out.println("line in class ="+line);
+        // System.out.println("tabCounter in class ="+tabCounter);
+        // System.out.println("tabs in class ="+temp);
+        // System.out.println("=======================================");
+
+
+        if(temp!=tabCounter){
+            System.err.println("IndentationError at line: "+line);
+            System.exit(1);    
         }
         AddScope scope = new AddScope();
         scope.add_new_scope();
@@ -583,11 +565,18 @@ class
         }
 
         line = myReader.nextLine();
-        int temp = returnTotalNumberOfTabs(line) ;
-        if( temp != -1 && temp!=tabCounter)
-        {
+        
+        int temp = countLeadingWhitespace(line) ;
+        
+        // System.out.println("line in class ="+line);
+        // System.out.println("tabCounter in class ="+tabCounter);
+        // System.out.println("tabs in class ="+temp);
+        // System.out.println("=======================================");
+
+        //if(temp != -1 && temp!=tabCounter){
+        if(temp!=tabCounter){
             System.out.println("Check your tabs in the begining of your class");
-            System.exit(0);
+            System.exit(1);
         }
         tempNameClass = $ID.text;
     } '('ID { inheritedClass = $ID.text;}')' ':'
@@ -607,7 +596,26 @@ class
 main:
     'if' '__name__' '==' '\'__main__\'' ':'
     {
-        tabCounter+=1;
+        line = myReader.nextLine();
+
+        // This tabs will be 0 
+        int tabs = countLeadingWhitespace(line);
+
+
+        // System.out.println("line in main ="+line);
+        // System.out.println("tabCounter in main ="+tabCounter);
+        // System.out.println("tabs in main ="+tabs);
+        // System.out.println("=======================================");
+
+
+        if(tabs!=tabCounter){
+            System.err.println("IndentationError at line: "+line);
+            System.exit(1);    
+        }
+
+
+
+        //tabCounter+=1;
         returnFlag = -1;
         TmpRw.openFile("tempCFile.c",false);      
         RW.writeFile("int main(){\n");
@@ -638,7 +646,9 @@ main:
 			e.printStackTrace();
 		}
     }
+
     statements
+    
     {
         TmpRw.closeFile();
         
@@ -674,27 +684,20 @@ initFunction
     :'def''__init__'
     {
         tabCounter +=1;
-        
-        // System.out.println("tabCounter at initFunction ="+tabCounter);
-        
         line = myReader.nextLine();
         
-        // System.out.println("line at initFunction ="+line);
-        
         //int temp = returnTotalNumberOfTabs(line) ;
-
         int temp = countLeadingWhitespace(line);
-
-        // System.out.println("tabs at initFunction ="+temp);
 
         // Big mistake here
         // temp is always -1 because of returnTotalNumberOfTabs
         // so this condition is always false
         // if(temp != -1 && temp!=tabCounter)
+
         if(temp!=tabCounter)
         {
-            System.out.println("Check your tabs near line: "+line);
-            System.exit(0);
+            System.err.println("IndentationError at line: "+line);
+            System.exit(1);
         }
         entity.add_new_function("__init__");
     }
@@ -751,12 +754,16 @@ function
 		tempFuncName.add($ID.text);
 		classesAndFunctionsMap.put(tempNameClass,tempFuncName);
         tabCounter +=1;
+
         line = myReader.nextLine();
-        int temp = returnTotalNumberOfTabs(line) ;
-        if(temp != -1 && temp!=tabCounter)
-        {
+
+
+        int temp = countLeadingWhitespace(line) ;
+
+        // if(temp != -1 && temp!=tabCounter)
+        if(temp!=tabCounter){
             System.out.println("Check your tabs near line: "+line);
-            System.exit(0);
+            System.exit(1);
         }
         entity.add_new_function($ID.text);
     }
@@ -798,52 +805,81 @@ function
     }
 ;
 statements
-    :(statement)+
-    |
+    :{tabCounter += 1;}
+    (
+        {
+
+            line = myReader.nextLine();
+            
+
+            int temp = countLeadingWhitespace(line) ;
+
+            // System.out.println("line in statements ="+line);
+            // System.out.println("tabCounter at statements ="+tabCounter);
+            // System.out.println("tabs at statements ="+temp);
+            // System.out.println("=======================================");
+
+            // if(temp != -1 && temp!=tabCounter+1)
+            if(temp!=tabCounter){
+                System.out.println("Check your tabs near line: "+line);
+                System.exit(1);
+            }
+        }
+        statement
+    )+
+    {tabCounter -= 1;}
+    |{tabCounter -= 1;}
 ;
 statement
-    :assignmentStat
-    {
-        line = myReader.nextLine();
-        int temp = returnTotalNumberOfTabs(line) ;
-        if(temp != -1 && temp!=tabCounter+1)
-        {
-            System.out.println("Check your tabs near line: "+line);
-            System.exit(0);
-        }
-    }
+    :
+    // {
+
+    //     line = myReader.nextLine();
+        
+    //     int temp = countLeadingWhitespace(line) ;
+
+    //     // if(temp != -1 && temp!=tabCounter+1)
+    //     if(temp!=tabCounter){
+    //         System.out.println("Check your tabs near line: "+line);
+    //         System.exit(1);
+    //     }
+    // }
+    assignmentStat
+
     |ifStat
     |whileStat
     |printStat
-    {
-        line = myReader.nextLine();
-        int temp = returnTotalNumberOfTabs(line) ;
-        if(temp != -1 && temp!=tabCounter+1)
-        {
-            System.out.println("Check your tabs near line: "+line);
-            System.exit(0);
-        }
-    }
+    // {
+    //     line = myReader.nextLine();
+
+
+    //     int temp = countLeadingWhitespace(line) ;
+    //     // if(temp != -1 && temp!=tabCounter+1)
+    //     if(temp!=tabCounter){
+    //         System.out.println("Check your tabs near line: "+line);
+    //         System.exit(1);
+    //     }
+    // }
     |returnStat
-    {
-        line = myReader.nextLine();
-        int temp = returnTotalNumberOfTabs(line) ;
-        if(temp != -1 && temp!=tabCounter+1)
-        {
-            System.out.println("Check your tabs near line: "+line);
-            System.exit(0);
-        }
-    }
+    // {
+    //     line = myReader.nextLine();
+    //     int temp = countLeadingWhitespace(line) ;
+    //     // if(temp != -1 && temp!=tabCounter+1)
+    //     if(temp!=tabCounter){
+    //         System.out.println("Check your tabs near line: "+line);
+    //         System.exit(1);
+    //     }
+    // }
     |{callStatFlag = true;}callStat
-    {
-        line = myReader.nextLine();
-        int temp = returnTotalNumberOfTabs(line) ;
-        if(temp != -1 && temp!=tabCounter+1)
-        {
-            System.out.println("Check your tabs near line: "+line);
-            System.exit(0);
-        }
-    }
+    // {
+    //     line = myReader.nextLine();
+    //     int temp = countLeadingWhitespace(line) ;
+    //     // if(temp != -1 && temp!=tabCounter+1)
+    //     if(temp!=tabCounter){
+    //         System.out.println("Check your tabs near line: "+line);
+    //         System.exit(1);
+    //     }
+    // }
     | 'pass'
 ;
 /*
@@ -968,13 +1004,14 @@ assignmentStat
 ifStat
     :'if'
         {
-            line = myReader.nextLine();
-            int temp = returnTotalNumberOfTabs(line) ;
-            if(temp != -1 && temp!=tabCounter+1)
-            {
-                System.out.println("Check your tabs near line: "+line);
-                System.exit(0);
-            }
+            // line = myReader.nextLine();
+            // int temp = countLeadingWhitespace(line) ;
+            // // if(temp != -1 && temp!=tabCounter+1)
+            // if(temp!=tabCounter){
+            //     System.out.println("Check your tabs near line: "+line);
+            //     System.exit(1);
+            // }
+
             // Need to set elseFlag false for each if
             elseFlag = false;
             if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
@@ -984,26 +1021,29 @@ ifStat
     condition':'
     {
 		rmTabsCallstat = false;
-        tabCounter +=1;
+
+        // tabCounter +=1;
+
         if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
         statements
     {
-        tabCounter -=1;
+        // tabCounter -=1;
         if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
     elsepart
     |'if' '('
     {
-        line = myReader.nextLine();
-        int temp = returnTotalNumberOfTabs(line) ;
-        if(temp != -1 && temp!=tabCounter+1)
-        {
-            System.out.println("Check your tabs near line: "+line);
-            System.exit(0);
-        }
+        // line = myReader.nextLine();
+        // int temp = countLeadingWhitespace(line) ;
+        // // if(temp != -1 && temp!=tabCounter+1)
+        // if(temp!=tabCounter){
+        //     System.out.println("Check your tabs near line: "+line);
+        //     System.exit(1);
+        // }
+
         elseFlag = false;
         if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"if (");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"if (");
@@ -1012,13 +1052,13 @@ ifStat
     condition')'':'
     {
 		rmTabsCallstat = false;
-        tabCounter +=1;
+        //tabCounter +=1;
         if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
     statements
     {
-        tabCounter -=1;
+        //tabCounter -=1;
         if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
@@ -1028,21 +1068,24 @@ elsepart
     :'else'':'
     {
         line = myReader.nextLine();
-        int temp = returnTotalNumberOfTabs(line) ;
-        if(temp != -1 && temp!=tabCounter+1)
-        {
+        int temp = countLeadingWhitespace(line) ;
+
+        // if(temp != -1 && temp!=tabCounter+1)
+        if(temp!=tabCounter){
             System.out.println("Check your tabs near line: "+line);
-            System.exit(0);
+            System.exit(1);
         }
+
         if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"else {\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"else {\n");
+
         // Need this flag here to add return 0 at C when else doesn't exist
         elseFlag = true;
-        tabCounter+=1;
+        //tabCounter+=1;
     }
     statements
     {
-        tabCounter-=1;
+        //tabCounter-=1;
         if(wrInFinalCFile==true)RW.writeFile("}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
@@ -1058,13 +1101,13 @@ whileStat
     '(' condition ')' ':'
     {
 		rmTabsCallstat = false;
-        tabCounter +=1;
+        //tabCounter +=1;
         if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
     statements
     {
-        tabCounter -=1;
+        //tabCounter -=1;
         if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
@@ -1077,13 +1120,13 @@ whileStat
     condition ':'
     {
 		rmTabsCallstat = false;
-        tabCounter +=1;
+        //tabCounter +=1;
         if(wrInFinalCFile==true)RW.writeFile("){\n");
         else TmpRw.writeFile("){\n");
     }
     statements
     {
-        tabCounter -=1;
+        //tabCounter -=1;
         if(wrInFinalCFile==true)RW.writeFile("\t".repeat(tabCounter)+"}\n");
         else TmpRw.writeFile("\t".repeat(tabCounter)+"}\n");
     }
