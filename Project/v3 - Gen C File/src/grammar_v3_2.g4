@@ -2,8 +2,6 @@
 In v3_x we are working on the output file in c
 */
 
-// TODO fix x=5 in main
-
 grammar grammar_v3_2;
 @header{
 	import java.io.BufferedReader;
